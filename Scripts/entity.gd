@@ -4,18 +4,22 @@ extends Node2D
 class_name Entity
 
 @export var sprite: Texture2D
+@export var atlas_x: int = 9
+@export var atlas_y: int = 20
 var entity_color: Color = Color(1.0, 0.5, 0.5)  # Default color (light red)
+var team: String = "None"
 
 var position_in_grid: Vector2i
 
-func _init(color: Color = Color(1.0, 0.5, 0.5)) -> void:
+func _init(color: Color = Color(1.0, 0.5, 0.5), team_name: String = "None") -> void:
     entity_color = color
+    team = team_name
 
 func _ready() -> void:
     var sprite_node = Sprite2D.new()
     sprite_node.texture = sprite
     sprite_node.region_enabled = true  # Enable region selection for atlas
-    sprite_node.region_rect = Rect2(9 * 16, 20 * 16, 16, 16)  # Select tile (9,20)
+    sprite_node.region_rect = Rect2(atlas_x * 16, atlas_y * 16, 16, 16)  # Select tile (9,20)
     
     # Apply color tint instead of shader
     sprite_node.modulate = entity_color

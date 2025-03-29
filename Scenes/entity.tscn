@@ -4,5 +4,8 @@
 [ext_resource type="Texture2D" uid="uid://ynhpgth7b45v" path="res://Sprites/tiles.png" id="2_l7g7l"]
 
 [node name="Entity" type="Sprite2D"]
+position = Vector2(688, 394)
+offset = Vector2(-688, -394)
 script = ExtResource("1_hsfu5")
 sprite = ExtResource("2_l7g7l")
+atlas_x = 10
