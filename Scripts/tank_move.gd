@@ -33,6 +33,15 @@ func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionar
             var pos_string = str(new_pos.x) + "," + str(new_pos.y)
             if not occupied_positions.has(pos_string):
                 possible_moves.append(new_pos)
+            # Special case: Remains don't block tank movement
+            elif occupied_positions.has(pos_string) and occupied_positions[pos_string] is Remains:
+                possible_moves.append(new_pos)
+            # Special case: Enemy structures can be destroyed, so tank can move there
+            elif occupied_positions.has(pos_string):
+                var object = occupied_positions[pos_string]
+                if object.has_method("initialize") and object.team != tank.team:
+                    if object is RigidBody or object is House:
+                        possible_moves.append(new_pos)
     
     return possible_moves
 
@@ -45,6 +54,12 @@ func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
     if possible_moves.size() > 0:
         var random_index = randi() % possible_moves.size()
         var new_position = possible_moves[random_index]
+        
+        # Check if there's a destroyable object at the new position
+        var destroyable = tank.check_for_destroyable_at_position(new_position, occupied_positions)
+        
+        # Even if there's something to destroy, the tank can still move there
+        # The game_loop will handle the actual destruction
         
         # Determine new facing direction based on movement
         var dir = new_position - tank.position_in_grid

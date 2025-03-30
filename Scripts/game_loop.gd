@@ -4,13 +4,16 @@ extends Node2D
 @export var rigid_body_scene: PackedScene
 @export var house_scene: PackedScene
 @export var tank_scene: PackedScene
+@export var remains_scene: PackedScene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
 var houses: Array[House] = []
 var tanks: Array[Tank] = []
+var remains: Array = [] # Array of remains objects
 var grid_size = Vector2i(Game.CELLS_AMOUNT.x, Game.CELLS_AMOUNT.y)
 var occupied_positions: Dictionary = {}  # Stores all occupied grid positions
+var pending_remains: Dictionary = {}  # Stores positions where destruction happened, waiting for tank to move off
 
 var teams = {
 	"Blue": Color(0.0, 0.0, 1.0),
@@ -42,6 +45,7 @@ var current_placement_type = PlacementType.ENTITY
 var debug_mode = false
 var entities_to_remove: Array[Entity] = []
 var reproduction_queue: Array = []  # Queue for entities to be born next turn
+var destruction_queue: Array = []   # Queue for objects to be destroyed
 
 func _ready() -> void:
 	# Create a preview entity for placement mode
@@ -127,6 +131,14 @@ func update_occupied_positions() -> void:
 	for tank in tanks:
 		var pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
 		occupied_positions[pos_string] = tank
+		
+	# Add remains to occupied positions
+	for remain in remains:
+		var pos_string = str(remain.position_in_grid.x) + "," + str(remain.position_in_grid.y)
+		
+		# Remains don't block movement, so only add them if position is not already occupied
+		if not occupied_positions.has(pos_string):
+			occupied_positions[pos_string] = remain
 
 # Check if there are any available adjacent cells around a position
 func has_available_adjacent_cell(pos: Vector2i) -> bool:
@@ -271,6 +283,9 @@ func process_iteration() -> void:
 	# Update occupied positions for collision detection
 	update_occupied_positions()
 	
+	# First, process any pending remains aging
+	process_remains()
+	
 	# First check for reproduction opportunities
 	check_for_reproduction()
 	
@@ -280,14 +295,45 @@ func process_iteration() -> void:
 	# Process entities leaving houses
 	process_house_exits()
 	
-	# Process tanks movement
+	# Process tanks movement and destruction
 	for tank in tanks:
+		# Check for entities in tank's vision field and destroy them
+		var vision_destroyed = tank.destroy_entities_in_vision(entities, rigid_bodies, houses, occupied_positions, grid_size)
+		destruction_queue.append_array(vision_destroyed)
+		
+		# Store old position to check if tank has moved off a destruction site
+		var old_position = tank.position_in_grid
+		
 		# Get current position and remove from occupied positions
-		var old_pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
+		var old_pos_string = str(old_position.x) + "," + str(old_position.y)
 		occupied_positions.erase(old_pos_string)
 		
 		# Move tank
 		tank.move_randomly(grid_size, occupied_positions)
+		
+		# Check if tank drove over a destroyable object
+		var destroyable = tank.check_for_destroyable_at_position(tank.position_in_grid, occupied_positions)
+		if not destroyable.is_empty():
+			destruction_queue.append(destroyable)
+			# We immediately remove the object from occupied_positions so the tank can move there
+			var destroy_pos_string = str(destroyable["position"].x) + "," + str(destroyable["position"].y)
+			occupied_positions.erase(destroy_pos_string)
+			
+			# Store position and team of destroyed object for remains creation later
+			var pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
+			pending_remains[pos_string] = {
+				"position": tank.position_in_grid,
+				"team": destroyable["team"]
+			}
+		
+		# Check if tank moved off a destruction site
+		if old_position != tank.position_in_grid:
+			var old_pos_key = str(old_position.x) + "," + str(old_position.y)
+			if pending_remains.has(old_pos_key):
+				# Tank moved off a position where something was destroyed, create remains
+				var remain_data = pending_remains[old_pos_key]
+				create_remains(remain_data["position"], remain_data["team"])
+				pending_remains.erase(old_pos_key)
 		
 		# Add new position to occupied positions
 		var new_pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
@@ -332,6 +378,12 @@ func process_iteration() -> void:
 	# After all entities have moved, process any pending reproductions
 	process_reproduction_queue()
 	
+	# Process destruction queue
+	process_destruction_queue()
+	
+	# Check if any pending remains can be created
+	process_pending_remains()
+	
 	# Update occupied positions again to ensure consistency
 	update_occupied_positions()
 	
@@ -348,6 +400,112 @@ func process_iteration() -> void:
 		# Update the debug visualization for each tank
 		for tank in tanks:
 			tank.update_possible_moves(grid_size, occupied_positions)
+
+# Triggered after each iteration is complete
+func process_pending_remains() -> void:
+	var positions_to_check = pending_remains.keys()
+	var positions_to_remove = []
+	
+	# Check each pending remain position
+	for pos_string in positions_to_check:
+		# Parse position string
+		var coords = pos_string.split(",")
+		var grid_pos = Vector2i(int(coords[0]), int(coords[1]))
+		
+		# Check if position is now free (no tank or other entity)
+		var is_free = true
+		for tank in tanks:
+			if tank.position_in_grid == grid_pos:
+				is_free = false
+				break
+		
+		# If position is free, create remains and mark for removal from pending list
+		if is_free:
+			var remain_data = pending_remains[pos_string]
+			create_remains(remain_data["position"], remain_data["team"])
+			positions_to_remove.append(pos_string)
+	
+	# Remove processed positions
+	for pos_string in positions_to_remove:
+		pending_remains.erase(pos_string)
+
+# Process remains objects - age them and remove if lifetime is over
+func process_remains() -> void:
+	var remains_to_remove = []
+	
+	for remain in remains:
+		if remain.age():
+			# This remains object has reached the end of its lifetime
+			remains_to_remove.append(remain)
+	
+	# Remove expired remains
+	for remain in remains_to_remove:
+		# Remove from occupied positions
+		var pos_string = str(remain.position_in_grid.x) + "," + str(remain.position_in_grid.y)
+		if occupied_positions.has(pos_string) and occupied_positions[pos_string] == remain:
+			occupied_positions.erase(pos_string)
+		
+		# Remove from array and free node
+		var index = remains.find(remain)
+		if index != -1:
+			remains.remove_at(index)
+		remain.queue_free()
+
+# Create remains at a specific position
+func create_remains(pos: Vector2i, team_name: String) -> void:
+	var remain = remains_scene.instantiate() as Remains
+	var color = teams[team_name]
+	
+	# Initialize the remains
+	remain.initialize(color, team_name)
+	remain.position_in_grid = pos
+	remain.global_position = Vector2(pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
+							pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
+	
+	add_child(remain)
+	remains.append(remain)
+	
+	# Do not mark remains as occupied yet - they will be when update_occupied_positions is called
+	# This allows tanks to move through them
+
+# Process the destruction queue
+func process_destruction_queue() -> void:
+	for item in destruction_queue:
+		match item["type"]:
+			"entity":
+				var entity = item["object"] as Entity
+				if not entity.is_dead:
+					# Mark entity as dead
+					entity.is_dead = true
+					entity.emit_signal("entity_died", entity)
+					print("Tank destroyed entity of team: ", entity.team)
+					
+			"rigid_body":
+				var rigid_body = item["object"] as RigidBody
+				# Remove rigid body
+				var index = rigid_bodies.find(rigid_body)
+				if index != -1:
+					rigid_bodies.remove_at(index)
+					rigid_body.queue_free()
+					print("Tank destroyed rigid body of team: ", rigid_body.team)
+				
+			"house":
+				var house = item["object"] as House
+				# Kill all entities inside the house
+				for entity in item["entities_inside"]:
+					if not entity.is_dead:
+						entity.is_dead = true
+						entity.emit_signal("entity_died", entity)
+				
+				# Remove the house
+				var index = houses.find(house)
+				if index != -1:
+					houses.remove_at(index)
+					house.queue_free()
+					print("Tank destroyed house of team: ", house.team, " with ", item["entities_inside"].size(), " entities inside")
+	
+	# Clear the destruction queue
+	destruction_queue.clear()
 
 # Check for entities entering houses
 func check_for_house_entries() -> void:

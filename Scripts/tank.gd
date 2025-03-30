@@ -62,7 +62,8 @@ func initialize(color: Color, team_name: String) -> void:
 # Update possible moves and debug visualization
 func update_possible_moves(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 	var moves = movement.calculate_possible_moves(grid_size, occupied_positions)
-	debug_visualizer.show_vision_area(calculate_vision_pattern(), grid_size)
+	# Show both vision area and kill zone in debug visualization
+	debug_visualizer.show_vision_and_kill_area(calculate_vision_pattern(), calculate_kill_zone(), grid_size)
 
 # Calculate vision pattern based on current direction
 func calculate_vision_pattern() -> Array[Vector2i]:
@@ -136,6 +137,125 @@ func calculate_vision_pattern() -> Array[Vector2i]:
 	
 	return absolute_result
 
+# Calculate kill zone based on current direction
+func calculate_kill_zone() -> Array[Vector2i]:
+	# Create a properly typed array for the result
+	var result: Array[Vector2i] = []
+	
+	# Kill zone pattern as shown in the image:
+	# OOXOO
+	# OXXXO
+	# XXXXX
+	# SSTSS
+	# OSSSO
+	
+	if facing_direction == Vector2i(0, -1):  # Up
+		result = [
+			# Row 1 (furthest ahead)
+			Vector2i(0, -3),
+			# Row 2
+			Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2),
+			# Row 3 (in front of tank)
+			Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1)
+		]
+	elif facing_direction == Vector2i(0, 1):  # Down
+		result = [
+			# Row 1 (furthest ahead - now below tank)
+			Vector2i(0, 3),
+			# Row 2
+			Vector2i(-1, 2), Vector2i(0, 2), Vector2i(1, 2),
+			# Row 3 (in front of tank)
+			Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)
+		]
+	elif facing_direction == Vector2i(1, 0):  # Right
+		result = [
+			# Furthest right
+			Vector2i(3, 0),
+			# Second column
+			Vector2i(2, -1), Vector2i(2, 0), Vector2i(2, 1),
+			# Third column (in front of tank)
+			Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1)
+		]
+	elif facing_direction == Vector2i(-1, 0):  # Left
+		result = [
+			# Furthest left
+			Vector2i(-3, 0),
+			# Second column
+			Vector2i(-2, -1), Vector2i(-2, 0), Vector2i(-2, 1),
+			# Third column (in front of tank)
+			Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(-1, 1)
+		]
+	
+	# Translate pattern to be relative to tank's position
+	var absolute_result: Array[Vector2i] = []
+	for pos in result:
+		absolute_result.append(position_in_grid + pos)
+	
+	return absolute_result
+	
+# Check for entities in vision field and destroy them
+func destroy_entities_in_vision(entities: Array, rigid_bodies: Array, houses: Array, occupied_positions: Dictionary, grid_size: Vector2i) -> Array:
+	var destroyed_objects = []
+	var kill_zone = calculate_kill_zone()
+	
+	# Create a dictionary for fast lookup of kill zone positions
+	var kill_positions = {}
+	for pos in kill_zone:
+		var pos_string = str(pos.x) + "," + str(pos.y)
+		kill_positions[pos_string] = true
+	
+	# Check each position in kill zone
+	for pos in kill_zone:
+		# Skip positions outside grid
+		if pos.x < 0 or pos.x >= grid_size.x or pos.y < 0 or pos.y >= grid_size.y:
+			continue
+			
+		var pos_string = str(pos.x) + "," + str(pos.y)
+		if occupied_positions.has(pos_string):
+			var object = occupied_positions[pos_string]
+			
+			# Destroy only enemy entities/objects (different team)
+			if object.team != team:
+				if object is Entity and object.visible:
+					# Found an enemy entity in kill zone - mark for destruction
+					destroyed_objects.append({
+						"type": "entity",
+						"object": object,
+						"position": pos,
+						"team": object.team
+					})
+				
+				# No remains are created for kills in vision field
+				# Remains are only created when destroying structures by driving over them
+	
+	return destroyed_objects
+
+# Check if the position the tank is moving to contains a destroyable object
+func check_for_destroyable_at_position(pos: Vector2i, occupied_positions: Dictionary) -> Dictionary:
+	var pos_string = str(pos.x) + "," + str(pos.y)
+	if occupied_positions.has(pos_string):
+		var object = occupied_positions[pos_string]
+		
+		# Destroy only enemy objects (different team)
+		if object.team != team:
+			if object is RigidBody:
+				return {
+					"type": "rigid_body",
+					"object": object,
+					"position": pos,
+					"team": object.team
+				}
+			elif object is House:
+				return {
+					"type": "house",
+					"object": object,
+					"position": pos,
+					"team": object.team,
+					"entities_inside": object.entities_inside.duplicate()
+				}
+	
+	return {}  # Empty dict if nothing to destroy
+
 # Delegate to movement component
 func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 	var old_direction = facing_direction
@@ -147,7 +267,7 @@ func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 	
 	# Update debug visualization with new vision pattern
 	if debug_visualizer and debug_visualizer.is_visible:
-		debug_visualizer.show_vision_area(calculate_vision_pattern(), grid_size)
+		debug_visualizer.show_vision_and_kill_area(calculate_vision_pattern(), calculate_kill_zone(), grid_size)
 
 # Update sprite based on current direction
 func update_sprite_for_direction() -> void:
