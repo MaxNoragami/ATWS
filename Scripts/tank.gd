@@ -21,6 +21,9 @@ var movement: TankMovement
 var debug_visualizer: TankVisionVisualizer
 var is_dead: bool = false
 
+# Signal for when this tank is destroyed
+signal tank_destroyed(tank)
+
 func _init(color: Color = Color(1.0, 1.0, 1.0), team_name: String = "None") -> void:
 	entity_color = color
 	team = team_name
@@ -194,7 +197,7 @@ func calculate_kill_zone() -> Array[Vector2i]:
 	return absolute_result
 	
 # Check for entities in vision field and destroy them
-func destroy_entities_in_vision(entities: Array, rigid_bodies: Array, houses: Array, occupied_positions: Dictionary, grid_size: Vector2i) -> Array:
+func destroy_entities_in_vision(entities: Array, rigid_bodies: Array, houses: Array, tanks: Array, occupied_positions: Dictionary, grid_size: Vector2i) -> Array:
 	var destroyed_objects = []
 	var kill_zone = calculate_kill_zone()
 	
@@ -224,9 +227,14 @@ func destroy_entities_in_vision(entities: Array, rigid_bodies: Array, houses: Ar
 						"position": pos,
 						"team": object.team
 					})
-				
-				# No remains are created for kills in vision field
-				# Remains are only created when destroying structures by driving over them
+				elif object is Tank and not object.is_dead:
+					# Found an enemy tank in kill zone - mark for destruction
+					destroyed_objects.append({
+						"type": "tank",
+						"object": object,
+						"position": pos,
+						"team": object.team
+					})
 	
 	return destroyed_objects
 
@@ -252,6 +260,13 @@ func check_for_destroyable_at_position(pos: Vector2i, occupied_positions: Dictio
 					"position": pos,
 					"team": object.team,
 					"entities_inside": object.entities_inside.duplicate()
+				}
+			elif object is Tank:
+				return {
+					"type": "tank",
+					"object": object,
+					"position": pos,
+					"team": object.team
 				}
 	
 	return {}  # Empty dict if nothing to destroy

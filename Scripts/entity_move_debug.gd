@@ -29,9 +29,6 @@ func show_possible_moves(moves: Array[Vector2i]) -> void:
         # Position the square on the grid
         square.global_position = Vector2(move_pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
                                          move_pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
-    
-    # Force a redraw to update the visualization
-    queue_redraw()
 
 func _draw() -> void:
     if not is_visible:
