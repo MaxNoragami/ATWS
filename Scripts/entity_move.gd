@@ -31,6 +31,18 @@ func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionar
                 var pos_string = str(new_pos.x) + "," + str(new_pos.y)
                 if not occupied_positions.has(pos_string):
                     possible_moves.append(new_pos)
+                # Special case: Check if position has a house and if entity can enter it
+                elif occupied_positions.has(pos_string) and occupied_positions[pos_string] is House:
+                    var house = occupied_positions[pos_string] as House
+                    # If the house is from the same team and has space, consider it a possible move
+                    if house.team == entity.team and house.entities_inside.size() < house.max_capacity:
+                        # Check if this position is a valid entrance to the house
+                        for entrance_pos in house.entrance_positions:
+                            if new_pos == entrance_pos:
+                                # Check if entity has no house entry cooldown
+                                if not entity.has_meta("house_entry_cooldown"):
+                                    possible_moves.append(new_pos)
+                                break
     
     return possible_moves
 
@@ -67,6 +79,20 @@ func move_to_grid_position(grid_pos: Vector2i, grid_size: Vector2i, occupied_pos
     # Check if position is already occupied
     var pos_string = str(new_position.x) + "," + str(new_position.y)
     if occupied_positions.has(pos_string) and occupied_positions[pos_string] != entity:
+        # Special case: Check if position has a house and if entity can enter it
+        if occupied_positions[pos_string] is House:
+            var house = occupied_positions[pos_string] as House
+            # If the house is from the same team and has space, allow moving to it
+            if house.team == entity.team and house.entities_inside.size() < house.max_capacity:
+                # Check if this position is a valid entrance to the house
+                for entrance_pos in house.entrance_positions:
+                    if new_position == entrance_pos:
+                        # Update entity's grid position
+                        entity.position_in_grid = new_position
+                        # Update entity's global position
+                        update_position()
+                        return true
+        
         return false
     
     # Update entity's grid position

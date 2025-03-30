@@ -2,9 +2,11 @@ extends Node2D
 
 @export var entity_scene: PackedScene
 @export var rigid_body_scene: PackedScene
+@export var house_scene: PackedScene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
+var houses: Array[House] = []
 var grid_size = Vector2i(Game.CELLS_AMOUNT.x, Game.CELLS_AMOUNT.y)
 var occupied_positions: Dictionary = {}  # Stores all occupied grid positions
 
@@ -31,7 +33,7 @@ var current_gender = Entity.Gender.MALE
 # Placement mode variables
 var placement_mode = false
 var placement_preview: Node2D = null
-enum PlacementType { ENTITY, RIGID_BODY }
+enum PlacementType { ENTITY, RIGID_BODY, HOUSE }
 var current_placement_type = PlacementType.ENTITY
 
 # Debug mode
@@ -57,14 +59,9 @@ func create_placement_preview() -> void:
 	if current_placement_type == PlacementType.ENTITY:
 		placement_preview = entity_scene.instantiate() as Entity
 		# For entity, we need to adapt to your entity's initialization method
-		# Check if your Entity class already has an initialize method, 
-		# otherwise use your existing initialization pattern
 		if placement_preview.has_method("initialize"):
 			placement_preview.initialize(preview_color, team_name)
 		else:
-			# Use whatever approach your entities are using
-			# This assumes entities might be using _init differently
-			# or have a custom pattern
 			var entity_preview = placement_preview as Entity
 			entity_preview.entity_color = preview_color
 			entity_preview.team = team_name
@@ -73,8 +70,11 @@ func create_placement_preview() -> void:
 		var entity_preview = placement_preview as Entity
 		entity_preview.gender = current_gender
 		entity_preview.update_sprite_for_age_and_gender()
-	else:  # RIGID_BODY
+	elif current_placement_type == PlacementType.RIGID_BODY:
 		placement_preview = rigid_body_scene.instantiate() as RigidBody
+		placement_preview.initialize(preview_color, team_name)
+	else:  # HOUSE
+		placement_preview = house_scene.instantiate() as House
 		placement_preview.initialize(preview_color, team_name)
 	
 	placement_preview.visible = false  # Hide initially until placement mode is activated
@@ -112,6 +112,11 @@ func update_occupied_positions() -> void:
 	for rigid_body in rigid_bodies:
 		var pos_string = str(rigid_body.position_in_grid.x) + "," + str(rigid_body.position_in_grid.y)
 		occupied_positions[pos_string] = rigid_body
+		
+	# Add houses to occupied positions
+	for house in houses:
+		var pos_string = str(house.position_in_grid.x) + "," + str(house.position_in_grid.y)
+		occupied_positions[pos_string] = house
 
 # Check if there are any available adjacent cells around a position
 func has_available_adjacent_cell(pos: Vector2i) -> bool:
@@ -129,6 +134,24 @@ func has_available_adjacent_cell(pos: Vector2i) -> bool:
 					return true
 	
 	return false
+
+# Check if a specific position is available (not occupied and within bounds)
+func is_position_available(pos: Vector2i) -> bool:
+	# Check if position is within grid bounds
+	if pos.x < 0 or pos.x >= grid_size.x or pos.y < 0 or pos.y >= grid_size.y:
+		return false
+		
+	# Check if position is occupied by anything
+	var pos_string = str(pos.x) + "," + str(pos.y)
+	if occupied_positions.has(pos_string):
+		return false
+		
+	# Extra check specifically for houses
+	for house in houses:
+		if pos == house.position_in_grid:
+			return false
+	
+	return true
 
 func update_placement_preview() -> void:
 	# Get mouse position and convert to grid position
@@ -152,6 +175,11 @@ func update_placement_preview() -> void:
 	# Update sprite color
 	if placement_preview.get_child_count() > 0 and placement_preview.get_child(0) is Sprite2D:
 		placement_preview.get_child(0).modulate = preview_color
+		
+	# If house, update entrance positions
+	if current_placement_type == PlacementType.HOUSE:
+		var house_preview = placement_preview as House
+		house_preview.update_entrance_positions()
 
 func _input(event) -> void:
 	if event.is_action_pressed("next_iteration"):
@@ -181,11 +209,14 @@ func _input(event) -> void:
 				entity_preview.gender = current_gender
 				entity_preview.update_sprite_for_age_and_gender()
 	
-	# Toggle placement type (Entity/RigidBody)
+	# Toggle placement type
 	if event.is_action_pressed("switch_entity") and placement_mode:
 		if current_placement_type == PlacementType.ENTITY:
 			current_placement_type = PlacementType.RIGID_BODY
 			print("Placement type: Rigid Body")
+		elif current_placement_type == PlacementType.RIGID_BODY:
+			current_placement_type = PlacementType.HOUSE
+			print("Placement type: House")
 		else:
 			current_placement_type = PlacementType.ENTITY
 			print("Placement type: Entity")
@@ -224,12 +255,34 @@ func process_iteration() -> void:
 	# First check for reproduction opportunities
 	check_for_reproduction()
 	
+	# Check for entities entering houses
+	check_for_house_entries()
+	
+	# Process entities leaving houses
+	process_house_exits()
+	
 	# Create a copy of the entities array to safely iterate
 	var current_entities = entities.duplicate()
 	
 	# Process each entity's movement and aging
 	for entity in current_entities:
 		if not entity.is_dead:
+			# Decrement house entry cooldown if it exists
+			if entity.has_meta("house_entry_cooldown"):
+				var cooldown = entity.get_meta("house_entry_cooldown")
+				cooldown -= 1
+				if cooldown <= 0:
+					entity.remove_meta("house_entry_cooldown")
+				else:
+					entity.set_meta("house_entry_cooldown", cooldown)
+					
+			# Skip movement if entity just exited a house this turn
+			if entity.has_meta("just_exited_house"):
+				entity.remove_meta("just_exited_house")
+				# Still age the entity
+				entity.age_up()
+				continue
+				
 			# Get current position and remove from occupied positions
 			var old_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
 			occupied_positions.erase(old_pos_string)
@@ -261,19 +314,85 @@ func process_iteration() -> void:
 				# Clear previous visualization and calculate new possible moves
 				entity.update_possible_moves(grid_size, occupied_positions)
 
+# Check for entities entering houses
+func check_for_house_entries() -> void:
+	# Create a copy of the entities array to safely iterate
+	var current_entities = entities.duplicate()
+	
+	for entity in current_entities:
+		if entity.is_dead:
+			continue
+		
+		# Check if entity is at a house entrance
+		for house in houses:
+			if house.can_entity_enter(entity, grid_size, occupied_positions):
+				# Try to add entity to house
+				if house.try_add_entity(entity):
+					# Hide entity from grid
+					entity.visible = false
+					
+					# Remove entity from occupied positions
+					var pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
+					occupied_positions.erase(pos_string)
+					
+					# Set entity position to house position (for bookkeeping)
+					entity.position_in_grid = house.position_in_grid
+					
+					print("Entity entered house of team: ", house.team)
+					break
+
+# Process entities leaving houses
+func process_house_exits() -> void:
+	for house in houses:
+		# Try to make an entity leave the house (random chance)
+		if house.entities_inside.size() > 0 and randf() < 0.3:  # 30% chance per house per turn
+			var result = house.try_remove_any_entity(grid_size, occupied_positions)
+			var entity = result[0]
+			var entrance_index = result[1]
+			
+			if entity != null and entrance_index >= 0:
+				# Place entity at the entrance position
+				var entrance_pos = house.entrance_positions[entrance_index]
+				
+				# Double-check that the entrance is actually free
+				var pos_string = str(entrance_pos.x) + "," + str(entrance_pos.y)
+				if occupied_positions.has(pos_string):
+					# If somehow the entrance got occupied since we checked, put entity back in house
+					house.entities_inside.push_front(entity)
+					print("Exit blocked at last moment, entity stays in house")
+					continue
+				
+				# Set entity position exactly at the entrance
+				entity.position_in_grid = entrance_pos
+				entity.visible = true
+				
+				# Update entity's global position
+				entity.movement.update_position()
+				
+				# Mark position as occupied
+				occupied_positions[pos_string] = entity
+				
+				# Flag this entity as having just exited a house (it will skip movement this turn)
+				entity.set_meta("just_exited_house", true)
+				
+				# Flag this entity with a house entry cooldown (can't re-enter for 1 turn)
+				entity.set_meta("house_entry_cooldown", 2)
+				
+				print("Entity exited house of team: ", house.team)
+
 # Check for reproduction opportunities between entities
 func check_for_reproduction() -> void:
 	var adults_by_position = {}
 	
 	# First, collect all adult entities by their positions
 	for entity in entities:
-		if not entity.is_dead and entity.is_adult():
+		if not entity.is_dead and entity.is_adult() and entity.visible:
 			var pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
 			adults_by_position[pos_string] = entity
 	
 	# Check each adult entity for potential reproduction
 	for entity in entities:
-		if entity.is_dead or not entity.is_adult() or entity.had_reproduction_this_turn:
+		if entity.is_dead or not entity.is_adult() or entity.had_reproduction_this_turn or not entity.visible:
 			continue
 		
 		# Check all 8 adjacent cells for compatible partners
@@ -312,8 +431,7 @@ func process_reproduction_queue() -> void:
 		var parent1 = repro_data["parent1"]
 		var parent2 = repro_data["parent2"]
 		
-		# Determine which parent has an available adjacent cell
-		var parent_to_use = null
+		# Collect all available cells around both parents
 		var available_cells = []
 		
 		# Check parent1's adjacent cells
@@ -323,37 +441,26 @@ func process_reproduction_queue() -> void:
 					continue
 					
 				var adjacent_pos = parent1.position_in_grid + Vector2i(x, y)
-				
-				# Check if position is within grid bounds
-				if adjacent_pos.x >= 0 and adjacent_pos.x < grid_size.x and adjacent_pos.y >= 0 and adjacent_pos.y < grid_size.y:
-					var pos_string = str(adjacent_pos.x) + "," + str(adjacent_pos.y)
-					if not occupied_positions.has(pos_string):
-						available_cells.append(adjacent_pos)
-						parent_to_use = parent1
-						break
-			
-			if parent_to_use:
-				break
+				if is_position_available(adjacent_pos):
+					available_cells.append(adjacent_pos)
 		
-		# If parent1 doesn't have available cells, check parent2
-		if not parent_to_use:
-			for x in range(-1, 2):
-				for y in range(-1, 2):
-					if x == 0 and y == 0:
-						continue
-						
-					var adjacent_pos = parent2.position_in_grid + Vector2i(x, y)
+		# Check parent2's adjacent cells
+		for x in range(-1, 2):
+			for y in range(-1, 2):
+				if x == 0 and y == 0:
+					continue
 					
-					# Check if position is within grid bounds
-					if adjacent_pos.x >= 0 and adjacent_pos.x < grid_size.x and adjacent_pos.y >= 0 and adjacent_pos.y < grid_size.y:
-						var pos_string = str(adjacent_pos.x) + "," + str(adjacent_pos.y)
-						if not occupied_positions.has(pos_string):
-							available_cells.append(adjacent_pos)
-							parent_to_use = parent2
+				var adjacent_pos = parent2.position_in_grid + Vector2i(x, y)
+				if is_position_available(adjacent_pos):
+					# Check if this position is already in our available cells list
+					var is_duplicate = false
+					for pos in available_cells:
+						if pos == adjacent_pos:
+							is_duplicate = true
 							break
-				
-				if parent_to_use:
-					break
+					
+					if not is_duplicate:
+						available_cells.append(adjacent_pos)
 		
 		# If no available cells found, skip this reproduction
 		if available_cells.size() == 0:
@@ -363,6 +470,11 @@ func process_reproduction_queue() -> void:
 		# Create a new entity at a random available adjacent cell
 		var random_index = randi() % available_cells.size()
 		var child_pos = available_cells[random_index]
+		
+		# Double check that the position is still available
+		if not is_position_available(child_pos):
+			print("Position became occupied, skipping reproduction")
+			continue
 		
 		var child = entity_scene.instantiate() as Entity
 		var color = teams[repro_data["team"]]
@@ -415,6 +527,12 @@ func on_entity_died(entity) -> void:
 		var pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
 		if occupied_positions.has(pos_string) and occupied_positions[pos_string] == entity:
 			occupied_positions.erase(pos_string)
+		
+		# If entity is inside a house, remove it from there too
+		for house in houses:
+			var index = house.entities_inside.find(entity)
+			if index != -1:
+				house.entities_inside.remove_at(index)
 
 func remove_entity(entity) -> void:
 	# Remove from our entities array
@@ -474,7 +592,7 @@ func place_at_preview() -> void:
 				if not e.is_dead:
 					e.update_possible_moves(grid_size, occupied_positions)
 			
-	else:  # RIGID_BODY
+	elif current_placement_type == PlacementType.RIGID_BODY:
 		# Create a new rigid body at the preview position
 		var rigid_body = rigid_body_scene.instantiate() as RigidBody
 		rigid_body.initialize(color, team_name)
@@ -487,3 +605,20 @@ func place_at_preview() -> void:
 		
 		# Mark this position as occupied immediately
 		occupied_positions[pos_string] = rigid_body
+		
+	else:  # HOUSE
+		# Create a new house at the preview position
+		var house = house_scene.instantiate() as House
+		house.initialize(color, team_name)
+		house.position_in_grid = placement_preview.position_in_grid
+		house.global_position = Vector2(house.position_in_grid.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
+									house.position_in_grid.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
+		
+		# Update entrance positions
+		house.update_entrance_positions()
+		
+		add_child(house)
+		houses.append(house)
+		
+		# Mark this position as occupied immediately
+		occupied_positions[pos_string] = house
