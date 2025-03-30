@@ -29,7 +29,7 @@ func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionar
             if new_pos.x >= 0 and new_pos.x < grid_size.x and new_pos.y >= 0 and new_pos.y < grid_size.y:
                 # Check if position is already occupied
                 var pos_string = str(new_pos.x) + "," + str(new_pos.y)
-                if not occupied_positions.has(pos_string) or occupied_positions[pos_string] == entity:
+                if not occupied_positions.has(pos_string):
                     possible_moves.append(new_pos)
     
     return possible_moves

@@ -42,6 +42,8 @@ var reproduction_queue: Array = []  # Queue for entities to be born next turn
 func _ready() -> void:
 	# Create a preview entity for placement mode
 	create_placement_preview()
+	# Initialize the occupied positions dictionary
+	update_occupied_positions()
 
 func create_placement_preview() -> void:
 	# Remove any existing preview
@@ -87,6 +89,8 @@ func _process(delta: float) -> void:
 		for entity in entities_to_remove:
 			remove_entity(entity)
 		entities_to_remove.clear()
+		# Update occupied positions after removing entities
+		update_occupied_positions()
 
 # Update the occupied positions dictionary
 func update_occupied_positions() -> void:
@@ -220,13 +224,24 @@ func process_iteration() -> void:
 	# Process each entity's movement and aging
 	for entity in current_entities:
 		if not entity.is_dead:
+			# Get current position and remove from occupied positions
+			var old_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
+			occupied_positions.erase(old_pos_string)
+			
+			# Move entity
 			entity.move_randomly(grid_size, occupied_positions)
+			
+			# Add new position to occupied positions
+			var new_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
+			occupied_positions[new_pos_string] = entity
+			
+			# Age entity
 			entity.age_up()
 	
 	# After all entities have moved, process any pending reproductions
 	process_reproduction_queue()
 	
-	# Update occupied positions again
+	# Update occupied positions again to ensure consistency
 	update_occupied_positions()
 	
 	# Update debug visualization if needed
@@ -384,6 +399,11 @@ func on_entity_died(entity) -> void:
 	# Add the entity to the removal queue
 	if not entities_to_remove.has(entity):
 		entities_to_remove.append(entity)
+		
+		# Remove the entity from occupied positions immediately to prevent overlap
+		var pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
+		if occupied_positions.has(pos_string) and occupied_positions[pos_string] == entity:
+			occupied_positions.erase(pos_string)
 
 func remove_entity(entity) -> void:
 	# Remove from our entities array
@@ -431,6 +451,9 @@ func place_at_preview() -> void:
 		add_child(entity)
 		entities.append(entity)
 		
+		# Mark this position as occupied immediately
+		occupied_positions[pos_string] = entity
+		
 		# If debug mode is on, show possible moves
 		if debug_mode:
 			entity.set_debug_visibility(true)
@@ -446,6 +469,6 @@ func place_at_preview() -> void:
 		
 		add_child(rigid_body)
 		rigid_bodies.append(rigid_body)
-	
-	# Update occupied positions
-	occupied_positions[pos_string] = placement_preview
+		
+		# Mark this position as occupied immediately
+		occupied_positions[pos_string] = rigid_body
