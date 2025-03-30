@@ -3,10 +3,12 @@ extends Node2D
 @export var entity_scene: PackedScene
 @export var rigid_body_scene: PackedScene
 @export var house_scene: PackedScene
+@export var tank_scene: PackedScene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
 var houses: Array[House] = []
+var tanks: Array[Tank] = []
 var grid_size = Vector2i(Game.CELLS_AMOUNT.x, Game.CELLS_AMOUNT.y)
 var occupied_positions: Dictionary = {}  # Stores all occupied grid positions
 
@@ -33,7 +35,7 @@ var current_gender = Entity.Gender.MALE
 # Placement mode variables
 var placement_mode = false
 var placement_preview: Node2D = null
-enum PlacementType { ENTITY, RIGID_BODY, HOUSE }
+enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK }
 var current_placement_type = PlacementType.ENTITY
 
 # Debug mode
@@ -73,8 +75,11 @@ func create_placement_preview() -> void:
 	elif current_placement_type == PlacementType.RIGID_BODY:
 		placement_preview = rigid_body_scene.instantiate() as RigidBody
 		placement_preview.initialize(preview_color, team_name)
-	else:  # HOUSE
+	elif current_placement_type == PlacementType.HOUSE:
 		placement_preview = house_scene.instantiate() as House
+		placement_preview.initialize(preview_color, team_name)
+	else:  # TANK
+		placement_preview = tank_scene.instantiate() as Tank
 		placement_preview.initialize(preview_color, team_name)
 	
 	placement_preview.visible = false  # Hide initially until placement mode is activated
@@ -117,6 +122,11 @@ func update_occupied_positions() -> void:
 	for house in houses:
 		var pos_string = str(house.position_in_grid.x) + "," + str(house.position_in_grid.y)
 		occupied_positions[pos_string] = house
+		
+	# Add tanks to occupied positions
+	for tank in tanks:
+		var pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
+		occupied_positions[pos_string] = tank
 
 # Check if there are any available adjacent cells around a position
 func has_available_adjacent_cell(pos: Vector2i) -> bool:
@@ -217,6 +227,9 @@ func _input(event) -> void:
 		elif current_placement_type == PlacementType.RIGID_BODY:
 			current_placement_type = PlacementType.HOUSE
 			print("Placement type: House")
+		elif current_placement_type == PlacementType.HOUSE:
+			current_placement_type = PlacementType.TANK
+			print("Placement type: Tank")
 		else:
 			current_placement_type = PlacementType.ENTITY
 			print("Placement type: Entity")
@@ -243,6 +256,12 @@ func _input(event) -> void:
 				entity.set_debug_visibility(debug_mode)
 				if debug_mode:
 					entity.update_possible_moves(grid_size, occupied_positions)
+					
+		# Update all tanks' debug visualization
+		for tank in tanks:
+			tank.set_debug_visibility(debug_mode)
+			if debug_mode:
+				tank.update_possible_moves(grid_size, occupied_positions)
 	
 	# Place entity or rigid body at current position
 	if event.is_action_pressed("place_entity") and placement_mode:
@@ -260,6 +279,19 @@ func process_iteration() -> void:
 	
 	# Process entities leaving houses
 	process_house_exits()
+	
+	# Process tanks movement
+	for tank in tanks:
+		# Get current position and remove from occupied positions
+		var old_pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
+		occupied_positions.erase(old_pos_string)
+		
+		# Move tank
+		tank.move_randomly(grid_size, occupied_positions)
+		
+		# Add new position to occupied positions
+		var new_pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
+		occupied_positions[new_pos_string] = tank
 	
 	# Create a copy of the entities array to safely iterate
 	var current_entities = entities.duplicate()
@@ -311,8 +343,11 @@ func process_iteration() -> void:
 		# Then update the debug visualization for each entity
 		for entity in entities:
 			if not entity.is_dead:
-				# Clear previous visualization and calculate new possible moves
 				entity.update_possible_moves(grid_size, occupied_positions)
+				
+		# Update the debug visualization for each tank
+		for tank in tanks:
+			tank.update_possible_moves(grid_size, occupied_positions)
 
 # Check for entities entering houses
 func check_for_house_entries() -> void:
@@ -606,7 +641,7 @@ func place_at_preview() -> void:
 		# Mark this position as occupied immediately
 		occupied_positions[pos_string] = rigid_body
 		
-	else:  # HOUSE
+	elif current_placement_type == PlacementType.HOUSE:
 		# Create a new house at the preview position
 		var house = house_scene.instantiate() as House
 		house.initialize(color, team_name)
@@ -622,3 +657,22 @@ func place_at_preview() -> void:
 		
 		# Mark this position as occupied immediately
 		occupied_positions[pos_string] = house
+		
+	else:  # TANK
+		# Create a new tank at the preview position
+		var tank = tank_scene.instantiate() as Tank
+		tank.initialize(color, team_name)
+		tank.position_in_grid = placement_preview.position_in_grid
+		tank.global_position = Vector2(tank.position_in_grid.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
+									tank.position_in_grid.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
+		
+		add_child(tank)
+		tanks.append(tank)
+		
+		# Mark this position as occupied immediately
+		occupied_positions[pos_string] = tank
+		
+		# If debug mode is on, show vision area
+		if debug_mode:
+			tank.set_debug_visibility(true)
+			tank.update_possible_moves(grid_size, occupied_positions)
