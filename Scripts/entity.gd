@@ -3,15 +3,45 @@ extends Node2D
 # Entity script
 class_name Entity
 
+signal entity_died(entity)
+
 @export var sprite: Texture2D
-@export var atlas_x: int = 9
-@export var atlas_y: int = 20
+@export var atlas_x: int = 24  # Default to male child
+@export var atlas_y: int = 10
 var entity_color: Color = Color(1.0, 0.5, 0.5)  # Default color (light red)
 var team: String = "None"
+
+# Gender properties
+enum Gender { MALE, FEMALE }
+var gender: Gender = Gender.MALE
+
+# Age properties
+var age: int = 0
+var lifespan: int = 100
+var age_periods = {
+	"child": 0.2,    # 0-19 years (20% of lifespan)
+	"adult": 0.6,    # 20-79 years (60% of lifespan)
+	"elder": 0.2     # 80-99 years (20% of lifespan)
+}
+
+# Atlas coordinates for different sprites
+var sprite_atlas = {
+	Gender.MALE: {
+		"child": Vector2i(24, 10),
+		"adult": Vector2i(29, 10),
+		"elder": Vector2i(27, 10)
+	},
+	Gender.FEMALE: {
+		"child": Vector2i(25, 10),
+		"adult": Vector2i(30, 10),
+		"elder": Vector2i(31, 10)
+	}
+}
 
 var position_in_grid: Vector2i
 var movement: EntityMovement
 var debug_visualizer: MoveDebugVisualizer
+var is_dead: bool = false
 
 func _init(color: Color = Color(1.0, 0.5, 0.5), team_name: String = "None") -> void:
 	entity_color = color
@@ -36,6 +66,9 @@ func _ready() -> void:
 	# Add debug visualizer
 	debug_visualizer = MoveDebugVisualizer.new(self)
 	add_child(debug_visualizer)
+	
+	# Initial age-based sprite update
+	update_sprite_for_age_and_gender()
 
 # Update possible moves and debug visualization
 func update_possible_moves(grid_size: Vector2i) -> void:
@@ -47,6 +80,46 @@ func move_randomly(grid_size: Vector2i) -> void:
 	movement.move_randomly(grid_size)
 	# Update debug visualization after movement
 	update_possible_moves(grid_size)
+
+# Age by one year
+func age_up() -> void:
+	age += 1
+	if age >= lifespan:
+		# Handle death - emit signal before freeing
+		is_dead = true
+		emit_signal("entity_died", self)
+		return
+	
+	# Update sprite based on new age
+	update_sprite_for_age_and_gender()
+
+# Update sprite based on current age and gender
+func update_sprite_for_age_and_gender() -> void:
+	var period = get_age_period()
+	var atlas_coords = sprite_atlas[gender][period]
+	update_sprite(atlas_coords.x, atlas_coords.y)
+
+# Get current age period (child, adult, elder)
+func get_age_period() -> String:
+	var child_limit = lifespan * age_periods["child"]
+	var adult_limit = child_limit + (lifespan * age_periods["adult"])
+	
+	if age < child_limit:
+		return "child"
+	elif age < adult_limit:
+		return "adult"
+	else:
+		return "elder"
+
+# Switch gender
+func switch_gender() -> void:
+	if gender == Gender.MALE:
+		gender = Gender.FEMALE
+	else:
+		gender = Gender.MALE
+	
+	# Update sprite based on new gender
+	update_sprite_for_age_and_gender()
 
 # Helper function to update sprite appearance
 func update_sprite(new_atlas_x: int, new_atlas_y: int) -> void:
