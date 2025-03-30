@@ -15,6 +15,8 @@ var remains: Array = [] # Array of remains objects
 var grid_size = Vector2i(Game.CELLS_AMOUNT.x, Game.CELLS_AMOUNT.y)
 var occupied_positions: Dictionary = {}  # Stores all occupied grid positions
 var pending_remains: Dictionary = {}  # Stores positions where destruction happened, waiting for tank to move off
+var ufos: Array[UFO] = []
+var ufos_to_remove: Array[UFO] = []
 
 var teams = {
 	"Blue": Color(0.0, 0.0, 1.0),
@@ -268,6 +270,10 @@ func _input(event) -> void:
 			placement_preview.visible = placement_mode
 		print("Placement mode:", "ON" if placement_mode else "OFF")
 	
+	
+	if event.is_action_pressed("spawn_ufo") or (event is InputEventKey and event.keycode == KEY_H and event.pressed and not event.echo):
+		spawn_random_ufo()
+		
 	# Toggle debug mode
 	if event.is_action_pressed("debug_mode"):
 		debug_mode = !debug_mode
@@ -309,6 +315,8 @@ func process_iteration() -> void:
 	
 	# Check for tank-to-tank combat
 	check_for_tank_combat()
+	
+	process_ufos()
 	
 	# Process tanks movement and destruction
 	for tank in tanks:
@@ -913,3 +921,146 @@ func place_at_preview() -> void:
 		if debug_mode:
 			tank.set_debug_visibility(true)
 			tank.update_possible_moves(grid_size, occupied_positions)
+
+func spawn_random_ufo() -> void:
+	# First find all valid positions (empty cells with at least 3 empty adjacent cells)
+	var valid_positions = []
+	
+	for x in range(grid_size.x):
+		for y in range(grid_size.y):
+			var pos = Vector2i(x, y)
+			var pos_string = str(pos.x) + "," + str(pos.y)
+			
+			# Skip if position is already occupied
+			if occupied_positions.has(pos_string):
+				continue
+			
+			# Count adjacent empty cells
+			var empty_adjacent = 0
+			for dx in range(-1, 2):
+				for dy in range(-1, 2):
+					if dx == 0 and dy == 0:
+						continue
+						
+					var adjacent_pos = pos + Vector2i(dx, dy)
+					
+					# Skip if out of bounds
+					if adjacent_pos.x < 0 or adjacent_pos.x >= grid_size.x or adjacent_pos.y < 0 or adjacent_pos.y >= grid_size.y:
+						continue
+					
+					var adjacent_pos_string = str(adjacent_pos.x) + "," + str(adjacent_pos.y)
+					if not occupied_positions.has(adjacent_pos_string):
+						empty_adjacent += 1
+			
+			# Add to valid positions if there are at least 3 empty adjacent cells
+			if empty_adjacent >= 3:
+				valid_positions.append(pos)
+	
+	# If no valid positions, print a message and return
+	if valid_positions.size() == 0:
+		print("Cannot spawn UFO: no valid positions with enough empty adjacent cells")
+		return
+	
+	# Choose a random valid position
+	var random_index = randi() % valid_positions.size()
+	var ufo_pos = valid_positions[random_index]
+	
+	# Choose a random team
+	var random_team_index = randi() % team_names.size()
+	var team_name = team_names[random_team_index]
+	var color = teams[team_name]
+	
+	# Create the UFO
+	var ufo = ufo_scene.instantiate() as UFO
+	ufo.initialize(color, team_name)
+	ufo.position_in_grid = ufo_pos
+	ufo.global_position = Vector2(ufo_pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
+							ufo_pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
+	
+	# Randomize number of people to spawn (1-3)
+	ufo.max_people_spawned = randi() % 3 + 1
+	
+	# Connect disappearance signal
+	ufo.connect("ufo_disappeared", on_ufo_disappeared)
+	
+	add_child(ufo)
+	ufos.append(ufo)
+	
+	# Mark this position as occupied
+	var pos_string = str(ufo_pos.x) + "," + str(ufo_pos.y)
+	occupied_positions[pos_string] = ufo
+	
+	print("UFO spawned for team: ", team_name, " at position: ", ufo_pos)
+	
+# Add this function to process UFOs each iteration
+func process_ufos() -> void:
+	for ufo in ufos:
+		# Try to spawn people around the UFO
+		try_spawn_ufo_entities(ufo)
+		
+		# Process round counter
+		if ufo.process_round():
+			# UFO should disappear
+			ufos_to_remove.append(ufo)
+	
+	# Remove UFOs that have completed their time
+	for ufo in ufos_to_remove:
+		remove_ufo(ufo)
+	ufos_to_remove.clear()
+
+# Add this function to handle spawning entities from UFOs
+func try_spawn_ufo_entities(ufo: UFO) -> void:
+	# Get all empty adjacent cells
+	var empty_cells = []
+	
+	for x in range(-1, 2):
+		for y in range(-1, 2):
+			if x == 0 and y == 0:
+				continue
+				
+			var adjacent_pos = ufo.position_in_grid + Vector2i(x, y)
+			
+			# Skip if out of bounds
+			if adjacent_pos.x < 0 or adjacent_pos.x >= grid_size.x or adjacent_pos.y < 0 or adjacent_pos.y >= grid_size.y:
+				continue
+			
+			var pos_string = str(adjacent_pos.x) + "," + str(adjacent_pos.y)
+			if not occupied_positions.has(pos_string):
+				empty_cells.append(adjacent_pos)
+	
+	# If no empty cells, UFO should disappear
+	if empty_cells.size() == 0:
+		ufos_to_remove.append(ufo)
+		return
+	
+	# Shuffle the empty cells to randomize spawning
+	empty_cells.shuffle()
+	
+	# Try to spawn entities until we reach the max for this round or run out of spaces
+	for pos in empty_cells:
+		if ufo.spawn_entity(pos, entity_scene, self):
+			# If we've reached max spawns, stop
+			if ufo.people_spawned_this_round >= ufo.max_people_spawned:
+				break
+
+# Add this function to handle UFO removal
+func remove_ufo(ufo: UFO) -> void:
+	# Remove from our UFOs array
+	var index = ufos.find(ufo)
+	if index != -1:
+		ufos.remove_at(index)
+	
+	# Remove from occupied positions
+	var pos_string = str(ufo.position_in_grid.x) + "," + str(ufo.position_in_grid.y)
+	if occupied_positions.has(pos_string) and occupied_positions[pos_string] == ufo:
+		occupied_positions.erase(pos_string)
+	
+	# Free the UFO node
+	ufo.queue_free()
+	print("UFO disappeared")
+
+# Signal handler for UFO disappearance
+func on_ufo_disappeared(ufo: UFO) -> void:
+	if not ufos_to_remove.has(ufo):
+		ufos_to_remove.append(ufo)
+		
