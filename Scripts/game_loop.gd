@@ -91,6 +91,12 @@ func _process(delta: float) -> void:
 		entities_to_remove.clear()
 		# Update occupied positions after removing entities
 		update_occupied_positions()
+		
+		# Update debug visualization if needed
+		if debug_mode:
+			for entity in entities:
+				if not entity.is_dead:
+					entity.update_possible_moves(grid_size, occupied_positions)
 
 # Update the occupied positions dictionary
 func update_occupied_positions() -> void:
@@ -244,10 +250,15 @@ func process_iteration() -> void:
 	# Update occupied positions again to ensure consistency
 	update_occupied_positions()
 	
-	# Update debug visualization if needed
+	# Update debug visualization for all entities after all movements are complete
 	if debug_mode:
+		# First, make sure occupied_positions is completely up-to-date
+		update_occupied_positions()
+		
+		# Then update the debug visualization for each entity
 		for entity in entities:
 			if not entity.is_dead:
+				# Clear previous visualization and calculate new possible moves
 				entity.update_possible_moves(grid_size, occupied_positions)
 
 # Check for reproduction opportunities between entities
@@ -457,7 +468,11 @@ func place_at_preview() -> void:
 		# If debug mode is on, show possible moves
 		if debug_mode:
 			entity.set_debug_visibility(true)
-			entity.update_possible_moves(grid_size, occupied_positions)
+			
+			# Update debug visualization for all entities since we've changed the occupied positions
+			for e in entities:
+				if not e.is_dead:
+					e.update_possible_moves(grid_size, occupied_positions)
 			
 	else:  # RIGID_BODY
 		# Create a new rigid body at the preview position
