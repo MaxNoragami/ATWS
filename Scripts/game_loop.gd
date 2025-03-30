@@ -5,6 +5,7 @@ extends Node2D
 @export var house_scene: PackedScene
 @export var tank_scene: PackedScene
 @export var remains_scene: PackedScene
+@export var ufo_scene: PackedScene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []

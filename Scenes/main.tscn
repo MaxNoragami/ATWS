@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://brq5xgdn42alb"]
+[gd_scene load_steps=12 format=3 uid="uid://brq5xgdn42alb"]
 
 [ext_resource type="Script" path="res://Scripts/game_loop.gd" id="1_8gbba"]
 [ext_resource type="PackedScene" uid="uid://b60i628gttn5u" path="res://Scenes/grid.tscn" id="2_bo1nx"]
@@ -8,6 +8,7 @@
 [ext_resource type="Texture2D" uid="uid://ynhpgth7b45v" path="res://Sprites/tiles.png" id="4_jjvhh"]
 [ext_resource type="PackedScene" uid="uid://b8om3q4r4yyhh" path="res://Scenes/tank.tscn" id="5_6bp64"]
 [ext_resource type="PackedScene" uid="uid://dbl153d5xaafh" path="res://Scenes/remains.tscn" id="6_344ge"]
+[ext_resource type="PackedScene" uid="uid://kbjcct2cmvuj" path="res://Scenes/ufo.tscn" id="7_ynf5e"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kry3j"]
 texture = ExtResource("4_jjvhh")
@@ -1099,6 +1100,7 @@ rigid_body_scene = ExtResource("3_kry3j")
 house_scene = ExtResource("4_21xkr")
 tank_scene = ExtResource("5_6bp64")
 remains_scene = ExtResource("6_344ge")
+ufo_scene = ExtResource("7_ynf5e")
 
 [node name="grid" parent="." instance=ExtResource("2_bo1nx")]
 
