@@ -24,6 +24,11 @@ var age_periods = {
 	"elder": 0.2     # 80-99 years (20% of lifespan)
 }
 
+# Reproduction properties
+var reproduction_chance: float = 0.5  # Initial reproduction chance
+var reproduction_decrease: float = 0.17  # Decrease after reproduction
+var had_reproduction_this_turn: bool = false  # Flag to track reproduction in current turn
+
 # Atlas coordinates for different sprites
 var sprite_atlas = {
 	Gender.MALE: {
@@ -71,15 +76,18 @@ func _ready() -> void:
 	update_sprite_for_age_and_gender()
 
 # Update possible moves and debug visualization
-func update_possible_moves(grid_size: Vector2i) -> void:
-	var moves = movement.calculate_possible_moves(grid_size)
+func update_possible_moves(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	var moves = movement.calculate_possible_moves(grid_size, occupied_positions)
 	debug_visualizer.show_possible_moves(moves)
 
 # Delegate to movement component
-func move_randomly(grid_size: Vector2i) -> void:
-	movement.move_randomly(grid_size)
+func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	movement.move_randomly(grid_size, occupied_positions)
 	# Update debug visualization after movement
-	update_possible_moves(grid_size)
+	update_possible_moves(grid_size, occupied_positions)
+	
+	# Reset reproduction flag for next turn
+	had_reproduction_this_turn = false
 
 # Age by one year
 func age_up() -> void:
@@ -92,6 +100,35 @@ func age_up() -> void:
 	
 	# Update sprite based on new age
 	update_sprite_for_age_and_gender()
+
+# Check if entity is an adult
+func is_adult() -> bool:
+	var child_limit = lifespan * age_periods["child"]
+	var adult_limit = child_limit + (lifespan * age_periods["adult"])
+	return age >= child_limit && age < adult_limit
+
+# Attempt reproduction with another entity
+func try_reproduce(other_entity: Entity) -> bool:
+	# Can't reproduce if either has already reproduced this turn
+	if had_reproduction_this_turn || other_entity.had_reproduction_this_turn:
+		return false
+		
+	# Combined reproduction chance
+	var combined_chance = reproduction_chance + other_entity.reproduction_chance
+	
+	# Roll for reproduction
+	if randf() <= combined_chance:
+		# Successful reproduction
+		had_reproduction_this_turn = true
+		other_entity.had_reproduction_this_turn = true
+		
+		# Decrease reproduction chance
+		reproduction_chance = max(0.0, reproduction_chance - reproduction_decrease)
+		other_entity.reproduction_chance = max(0.0, other_entity.reproduction_chance - reproduction_decrease)
+		
+		return true
+	
+	return false
 
 # Update sprite based on current age and gender
 func update_sprite_for_age_and_gender() -> void:

@@ -13,7 +13,7 @@ func _ready() -> void:
         push_error("EntityMovement must be a child of an Entity node")
 
 # Calculate all possible moves (8 directions, 1 square)
-func calculate_possible_moves(grid_size: Vector2i) -> Array[Vector2i]:
+func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionary) -> Array[Vector2i]:
     possible_moves.clear()
     
     # Check all 8 directions (horizontal, vertical, diagonal)
@@ -27,14 +27,17 @@ func calculate_possible_moves(grid_size: Vector2i) -> Array[Vector2i]:
             
             # Ensure new position stays within grid bounds
             if new_pos.x >= 0 and new_pos.x < grid_size.x and new_pos.y >= 0 and new_pos.y < grid_size.y:
-                possible_moves.append(new_pos)
+                # Check if position is already occupied
+                var pos_string = str(new_pos.x) + "," + str(new_pos.y)
+                if not occupied_positions.has(pos_string) or occupied_positions[pos_string] == entity:
+                    possible_moves.append(new_pos)
     
     return possible_moves
 
 # Move entity randomly but only to valid adjacent cells
-func move_randomly(grid_size: Vector2i) -> void:
+func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
     # Calculate possible moves
-    calculate_possible_moves(grid_size)
+    calculate_possible_moves(grid_size, occupied_positions)
     
     # If there are possible moves, choose one randomly
     if possible_moves.size() > 0:
@@ -46,6 +49,7 @@ func move_randomly(grid_size: Vector2i) -> void:
         
         # Update entity's global position based on grid position
         update_position()
+    # If no moves available, entity stays in place
 
 # Function to update the entity's global position based on its grid position
 func update_position() -> void:
@@ -54,14 +58,20 @@ func update_position() -> void:
     entity.global_position = grid_pos_float * Game.CELL_SIZE + Vector2(Game.CELL_SIZE.x / 2, Game.CELL_SIZE.y / 2)
 
 # Move to a specific grid position
-func move_to_grid_position(grid_pos: Vector2i, grid_size: Vector2i) -> void:
+func move_to_grid_position(grid_pos: Vector2i, grid_size: Vector2i, occupied_positions: Dictionary) -> bool:
     # Ensure position stays within grid bounds
     var new_position = grid_pos
     new_position.x = clamp(new_position.x, 0, grid_size.x - 1)
     new_position.y = clamp(new_position.y, 0, grid_size.y - 1)
+    
+    # Check if position is already occupied
+    var pos_string = str(new_position.x) + "," + str(new_position.y)
+    if occupied_positions.has(pos_string) and occupied_positions[pos_string] != entity:
+        return false
     
     # Update entity's grid position
     entity.position_in_grid = new_position
     
     # Update entity's global position
     update_position()
+    return true
