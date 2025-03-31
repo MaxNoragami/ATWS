@@ -29,6 +29,21 @@ func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionar
 			if new_pos.x >= 0 and new_pos.x < grid_size.x and new_pos.y >= 0 and new_pos.y < grid_size.y:
 				# Check if position is already occupied
 				var pos_string = str(new_pos.x) + "," + str(new_pos.y)
+				
+				# Check specifically for water biomes, but allow sand biomes
+				var is_water = false
+				for key in occupied_positions.keys():
+					if key == pos_string:
+						var obj = occupied_positions[key]
+						if obj is WaterBiome:  # Only check for water, not sand
+							is_water = true
+							break
+				
+				# Skip water positions
+				if is_water:
+					continue
+				
+				# Normal occupancy checking (allow sand which may be in occupied_positions)
 				if not occupied_positions.has(pos_string):
 					possible_moves.append(new_pos)
 				# Special case: Check if position has a house and if entity can enter it
@@ -43,6 +58,9 @@ func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionar
 								if not entity.has_meta("house_entry_cooldown"):
 									possible_moves.append(new_pos)
 								break
+				# Special case: Allow sand biomes (they should slow movement, not prevent it)
+				elif occupied_positions.has(pos_string) and occupied_positions[pos_string] is SandBiome:
+					possible_moves.append(new_pos)
 	
 	return possible_moves
 

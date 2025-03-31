@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://brq5xgdn42alb"]
+[gd_scene load_steps=14 format=3 uid="uid://brq5xgdn42alb"]
 
 [ext_resource type="Script" path="res://Scripts/game_loop.gd" id="1_8gbba"]
 [ext_resource type="PackedScene" uid="uid://b60i628gttn5u" path="res://Scenes/grid.tscn" id="2_bo1nx"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" uid="uid://dbl153d5xaafh" path="res://Scenes/remains.tscn" id="6_344ge"]
 [ext_resource type="PackedScene" uid="uid://kbjcct2cmvuj" path="res://Scenes/ufo.tscn" id="7_ynf5e"]
 [ext_resource type="PackedScene" uid="uid://dnpotrd30weuj" path="res://Scenes/sand.tscn" id="8_hptm8"]
+[ext_resource type="PackedScene" uid="uid://dphqf7bxsw53e" path="res://Scenes/water.tscn" id="9_d1ilt"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kry3j"]
 texture = ExtResource("4_jjvhh")
@@ -1103,6 +1104,7 @@ tank_scene = ExtResource("5_6bp64")
 remains_scene = ExtResource("6_344ge")
 ufo_scene = ExtResource("7_ynf5e")
 sand_scene = ExtResource("8_hptm8")
+water_scene = ExtResource("9_d1ilt")
 
 [node name="grid" parent="." instance=ExtResource("2_bo1nx")]
 
