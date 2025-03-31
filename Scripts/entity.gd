@@ -7,6 +7,12 @@ var is_in_sand: bool = false
 var can_move_in_sand: bool = true  # Alternates between true/false when in sand
 var is_preview: bool = false
 var vision_visualizer: EntityVisionVisualizer
+var detected_threats: Array[Tank] = []
+var safe_houses: Array[House] = []
+var is_fleeing: bool = false
+var flee_cooldown: int = 0
+var flee_cooldown_max: int = 5  # How many turns the entity remembers a threat
+
 
 signal entity_died(entity)
 
@@ -90,7 +96,7 @@ func _process(delta: float) -> void:
 	# Skip visual effects for preview entities
 	if is_preview:
 		return
-        	
+			
 	# Visual indication when entity is in sand and can't move
 	if is_in_sand and not can_move_in_sand:
 		# Make the entity slightly transparent when it's stuck in sand
@@ -251,3 +257,173 @@ func set_opacity(opacity: float) -> void:
 func set_debug_visibility(visible: bool) -> void:
 	debug_visualizer.set_visibility(visible)
 	vision_visualizer.set_visibility(visible)
+
+# Add this new function to detect threats and safe houses in vision radius
+func detect_threats_and_houses(occupied_positions: Dictionary, grid_size: Vector2i) -> void:
+	# Clear previous detections
+	detected_threats.clear()
+	safe_houses.clear()
+	is_fleeing = false
+	
+	# Get vision area
+	var vision = calculate_vision_area()
+	
+	# Check every cell in vision
+	for cell in vision:
+		# Skip if out of bounds
+		if cell.x < 0 or cell.x >= grid_size.x or cell.y < 0 or cell.y >= grid_size.y:
+			continue
+			
+		# Check if there's an object at this position
+		var pos_string = str(cell.x) + "," + str(cell.y)
+		if occupied_positions.has(pos_string):
+			var object = occupied_positions[pos_string]
+			
+			# If it's a tank from another team, add to threats
+			if object is Tank and not object.is_dead and object.team != team:
+				# Check if the tank's kill zone overlaps with our position or vision
+				var tank_kill_zone = object.calculate_kill_zone()
+				var is_threatening = false
+				
+				# Check if our entity is in the tank's kill zone
+				for kill_pos in tank_kill_zone:
+					if kill_pos == position_in_grid:
+						is_threatening = true
+						break
+				
+				if is_threatening:
+					detected_threats.append(object)
+					is_fleeing = true
+					flee_cooldown = flee_cooldown_max
+			
+			# If it's a house from our team, add to safe houses
+			elif object is House and object.team == team and object.entities_inside.size() < object.max_capacity:
+				safe_houses.append(object)
+
+# Override the move_randomly function to include AI behavior
+func move_with_ai(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	# First detect any threats or safe houses in vision radius
+	detect_threats_and_houses(occupied_positions, grid_size)
+	
+	# Decrease flee cooldown if active
+	if flee_cooldown > 0:
+		flee_cooldown -= 1
+		if flee_cooldown <= 0:
+			is_fleeing = false
+	
+	# If fleeing from a threat
+	if is_fleeing and detected_threats.size() > 0:
+		# Try to enter a safe house if possible
+		if safe_houses.size() > 0:
+			move_towards_safe_house(grid_size, occupied_positions)
+		else:
+			# Otherwise flee away from the threats
+			flee_from_threats(grid_size, occupied_positions)
+	else:
+		# Normal random movement if not threatened
+		movement.move_randomly(grid_size, occupied_positions)
+	
+	# Update debug visualization
+	update_possible_moves(grid_size, occupied_positions)
+	
+	# Reset reproduction flag
+	had_reproduction_this_turn = false
+
+
+# Move towards the nearest safe house
+func move_towards_safe_house(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	if safe_houses.size() == 0:
+		# No safe houses, move randomly
+		movement.move_randomly(grid_size, occupied_positions)
+		return
+	
+	# Find the closest safe house
+	var closest_house = safe_houses[0]
+	var shortest_distance = position_in_grid.distance_to(closest_house.position_in_grid)
+	
+	for house in safe_houses:
+		var distance = position_in_grid.distance_to(house.position_in_grid)
+		if distance < shortest_distance:
+			shortest_distance = distance
+			closest_house = house
+	
+	# Try to move towards one of its entrances
+	var best_move = position_in_grid  # Default to staying in place
+	var best_distance = 999999
+	
+	# Check valid moves first
+	var valid_moves = movement.calculate_possible_moves(grid_size, occupied_positions)
+	
+	# For each entrance of the house
+	for entrance in closest_house.entrance_positions:
+		# For each possible move
+		for move in valid_moves:
+			var distance_after_move = move.distance_to(entrance)
+			
+			# Check if this move gets us closer to the entrance
+			if distance_after_move < best_distance:
+				best_distance = distance_after_move
+				best_move = move
+	
+	# If we found a better move, take it
+	if best_move != position_in_grid:
+		# Update position
+		position_in_grid = best_move
+		
+		# Update global position
+		movement.update_position()
+	else:
+		# No better move found, just move randomly
+		movement.move_randomly(grid_size, occupied_positions)
+
+# Flee away from threats
+func flee_from_threats(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	if detected_threats.size() == 0:
+		# No threats, move randomly
+		movement.move_randomly(grid_size, occupied_positions)
+		return
+	
+	# Get all possible moves
+	var valid_moves = movement.calculate_possible_moves(grid_size, occupied_positions)
+	if valid_moves.size() == 0:
+		# No valid moves, stay in place
+		return
+	
+	# Calculate which move takes us furthest from all threats
+	var best_move = position_in_grid  # Default to staying in place
+	var best_safety_score = -999999
+	
+	for move in valid_moves:
+		var safety_score = 0
+		
+		# For each threat, calculate if this move is safer
+		for threat in detected_threats:
+			# Calculate distance from this move to the threat
+			var distance_to_threat = move.distance_to(threat.position_in_grid)
+			
+			# Higher distance = safer
+			safety_score += distance_to_threat
+			
+			# Check if move is in the threat's kill zone
+			var in_kill_zone = false
+			for kill_pos in threat.calculate_kill_zone():
+				if move == kill_pos:
+					safety_score -= 1000  # Heavily penalize moves into kill zones
+					in_kill_zone = true
+					break
+		
+		# If this move is safer than our best so far, update it
+		if safety_score > best_safety_score:
+			best_safety_score = safety_score
+			best_move = move
+	
+	# Make the best move
+	if best_move != position_in_grid:
+		# Update position
+		position_in_grid = best_move
+		
+		# Update global position
+		movement.update_position()
+	else:
+		# No better move found, just move randomly
+		movement.move_randomly(grid_size, occupied_positions)

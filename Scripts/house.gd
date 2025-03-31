@@ -180,3 +180,26 @@ func set_opacity(opacity: float) -> void:
 		var sprite_node = get_child(0) as Sprite2D
 		var current_color = sprite_node.modulate
 		sprite_node.modulate = Color(current_color.r, current_color.g, current_color.b, opacity)
+
+# Check if there are any enemy tanks nearby
+func has_enemy_tanks_nearby(grid_size: Vector2i, occupied_positions: Dictionary, scan_radius: int = 3) -> bool:
+	# Create a scan area around the house
+	for x in range(-scan_radius, scan_radius + 1):
+		for y in range(-scan_radius, scan_radius + 1):
+			var check_pos = position_in_grid + Vector2i(x, y)
+			
+			# Skip if outside grid
+			if check_pos.x < 0 or check_pos.x >= grid_size.x or check_pos.y < 0 or check_pos.y >= grid_size.y:
+				continue
+				
+			# Check if there's a tank at this position
+			var pos_string = str(check_pos.x) + "," + str(check_pos.y)
+			if occupied_positions.has(pos_string):
+				var object = occupied_positions[pos_string]
+				
+				# If it's an enemy tank, return true
+				if object is Tank and object.team != team and not object.is_dead:
+					return true
+	
+	# No enemy tanks found
+	return false

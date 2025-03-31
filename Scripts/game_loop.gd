@@ -366,8 +366,8 @@ func process_iteration() -> void:
 		var old_pos_string = str(old_position.x) + "," + str(old_position.y)
 		occupied_positions.erase(old_pos_string)
 		
-		# Move tank
-		tank.move_randomly(grid_size, occupied_positions)
+		# Use the new hunting behavior instead of random movement
+		tank.move_with_hunting(grid_size, occupied_positions)
 		
 		# Check if tank drove over a destroyable object
 		var destroyable = tank.check_for_destroyable_at_position(tank.position_in_grid, occupied_positions)
@@ -424,13 +424,13 @@ func process_iteration() -> void:
 			if entity.is_in_sand:
 				can_move = entity.can_move_in_sand
 			
-			if can_move:	
+			if can_move:
 				# Get current position and remove from occupied positions
 				var old_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
 				occupied_positions.erase(old_pos_string)
 				
-				# Move entity
-				entity.move_randomly(grid_size, occupied_positions)
+				# Use AI movement instead of random movement
+				entity.move_with_ai(grid_size, occupied_positions)
 				
 				# Add new position to occupied positions
 				var new_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
@@ -644,8 +644,17 @@ func check_for_house_entries() -> void:
 		# Check if entity is at a house entrance
 		for house in houses:
 			if house.can_entity_enter(entity, grid_size, occupied_positions):
-				# Try to add entity to house
-				if house.try_add_entity(entity):
+				# Check if entity is fleeing (prioritize entry when threatened)
+				var should_enter = entity.is_fleeing
+				
+				# If not fleeing, use normal chance-based entry
+				if not should_enter:
+					should_enter = house.try_add_entity(entity)
+				else:
+					# Always try to enter when fleeing
+					should_enter = house.try_add_entity(entity)
+				
+				if should_enter:
 					# Hide entity from grid
 					entity.visible = false
 					
@@ -664,6 +673,35 @@ func process_house_exits() -> void:
 	for house in houses:
 		# Try to make an entity leave the house (random chance)
 		if house.entities_inside.size() > 0 and randf() < 0.3:  # 30% chance per house per turn
+			
+			# Check if there are enemy tanks near the house
+			var enemy_tanks_nearby = false
+			var house_area = []
+			
+			# Create a slightly extended area around the house to check
+			for x in range(-3, 4):
+				for y in range(-3, 4):
+					var check_pos = house.position_in_grid + Vector2i(x, y)
+					# Skip if outside grid
+					if check_pos.x < 0 or check_pos.x >= grid_size.x or check_pos.y < 0 or check_pos.y >= grid_size.y:
+						continue
+					house_area.append(check_pos)
+			
+			# Check if any enemy tanks are in this area
+			for tank in tanks:
+				if tank.is_dead or tank.team == house.team:
+					continue
+					
+				if house_area.has(tank.position_in_grid):
+					enemy_tanks_nearby = true
+					break
+			
+			# If enemy tanks are nearby, entities stay inside for safety
+			if enemy_tanks_nearby:
+				# Skip exit attempt
+				continue
+			
+			# Normal exit procedure if no threats
 			var result = house.try_remove_any_entity(grid_size, occupied_positions)
 			var entity = result[0]
 			var entrance_index = result[1]

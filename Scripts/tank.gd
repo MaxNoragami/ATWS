@@ -10,16 +10,21 @@ var facing_direction: Vector2i = Vector2i(0, -1)  # Default facing up
 
 # Atlas coordinates for different directions
 var sprite_atlas = {
-	Vector2i(0, -1): Vector2i(9, 20),   # Up
-	Vector2i(0, 1): Vector2i(10, 20),   # Down
-	Vector2i(1, 0): Vector2i(11, 20),   # Right
-	Vector2i(-1, 0): Vector2i(11, 20)   # Left (same as right but flipped)
+	"up": Vector2i(9, 20),    # (0, -1) Up
+	"down": Vector2i(10, 20), # (0, 1) Down
+	"right": Vector2i(11, 20), # (1, 0) Right
+	"left": Vector2i(11, 20)   # (-1, 0) Left (same as right but flipped)
 }
 
 var vision_pattern = []  # Will be populated based on direction
 var movement: TankMovement
 var debug_visualizer: TankVisionVisualizer
 var is_dead: bool = false
+
+var detected_targets: Array = []  # Will hold detected entities and tanks
+var current_target = null  # Current target to hunt
+var target_last_seen_position = null  # Last known position of target
+var hunting_cooldown: int = 0  # Cooldown for hunting behavior
 
 # Signal for when this tank is destroyed
 signal tank_destroyed(tank)
@@ -74,63 +79,78 @@ func calculate_vision_pattern() -> Array[Vector2i]:
 	# Create a properly typed array for the result
 	var result: Array[Vector2i] = []
 	
-	# Instead of using rotation formulas which might be causing issues,
-	# we'll define each pattern explicitly
+	# We'll define each pattern explicitly with expanded vision range
 	
 	if facing_direction == Vector2i(0, -1):  # Up
-		# Original pattern
+		# Enhanced vision pattern (7 rows total)
 		result = [
-			# Row 1 (furthest ahead)
-			Vector2i(0, -3),
+			# Row 1 (furthest ahead - top)
+			Vector2i(0, -5),
 			# Row 2
-			Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2),
+			Vector2i(-1, -4), Vector2i(0, -4), Vector2i(1, -4),
 			# Row 3
+			Vector2i(-2, -3), Vector2i(-1, -3), Vector2i(0, -3), Vector2i(1, -3), Vector2i(2, -3),
+			# Row 4
+			Vector2i(-2, -2), Vector2i(-1, -2), Vector2i(0, -2), Vector2i(1, -2), Vector2i(2, -2),
+			# Row 5
 			Vector2i(-2, -1), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(2, -1),
-			# Row 4 (tank is here at 0,0)
+			# Row 6 (tank is here at 0,0)
 			Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(2, 0),
-			# Row 5 (behind tank)
+			# Row 7 (behind tank)
 			Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)
 		]
 	elif facing_direction == Vector2i(0, 1):  # Down
-		# Down pattern - mirrored from up
+		# Enhanced vision pattern mirrored for down
 		result = [
-			# Row 1 (furthest ahead - now below tank)
-			Vector2i(0, 3),
+			# Row 1 (furthest ahead - now at bottom)
+			Vector2i(0, 5),
 			# Row 2
-			Vector2i(-1, 2), Vector2i(0, 2), Vector2i(1, 2),
+			Vector2i(-1, 4), Vector2i(0, 4), Vector2i(1, 4),
 			# Row 3
+			Vector2i(-2, 3), Vector2i(-1, 3), Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3),
+			# Row 4
+			Vector2i(-2, 2), Vector2i(-1, 2), Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2),
+			# Row 5
 			Vector2i(-2, 1), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1),
-			# Row 4 (tank is here at 0,0)
+			# Row 6 (tank is here at 0,0)
 			Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(2, 0),
-			# Row 5 (behind tank - now above)
+			# Row 7 (behind tank - now at top)
 			Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1)
 		]
 	elif facing_direction == Vector2i(1, 0):  # Right
-		# Right pattern
+		# Enhanced vision pattern for right
 		result = [
 			# Furthest right
-			Vector2i(3, 0),
+			Vector2i(5, 0),
 			# Second column
-			Vector2i(2, -1), Vector2i(2, 0), Vector2i(2, 1),
-			# Third column 
+			Vector2i(4, -1), Vector2i(4, 0), Vector2i(4, 1),
+			# Third column
+			Vector2i(3, -2), Vector2i(3, -1), Vector2i(3, 0), Vector2i(3, 1), Vector2i(3, 2),
+			# Fourth column
+			Vector2i(2, -2), Vector2i(2, -1), Vector2i(2, 0), Vector2i(2, 1), Vector2i(2, 2),
+			# Fifth column
 			Vector2i(1, -2), Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1), Vector2i(1, 2),
-			# Fourth column (tank is at 0,0)
+			# Sixth column (tank is at 0,0)
 			Vector2i(0, -2), Vector2i(0, -1), Vector2i(0, 1), Vector2i(0, 2),
-			# Fifth column (behind tank)
+			# Seventh column (behind tank)
 			Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(-1, 1)
 		]
 	elif facing_direction == Vector2i(-1, 0):  # Left
-		# Left pattern
+		# Enhanced vision pattern for left
 		result = [
 			# Furthest left
-			Vector2i(-3, 0),
+			Vector2i(-5, 0),
 			# Second column
-			Vector2i(-2, -1), Vector2i(-2, 0), Vector2i(-2, 1),
+			Vector2i(-4, -1), Vector2i(-4, 0), Vector2i(-4, 1),
 			# Third column
+			Vector2i(-3, -2), Vector2i(-3, -1), Vector2i(-3, 0), Vector2i(-3, 1), Vector2i(-3, 2),
+			# Fourth column
+			Vector2i(-2, -2), Vector2i(-2, -1), Vector2i(-2, 0), Vector2i(-2, 1), Vector2i(-2, 2),
+			# Fifth column
 			Vector2i(-1, -2), Vector2i(-1, -1), Vector2i(-1, 0), Vector2i(-1, 1), Vector2i(-1, 2),
-			# Fourth column (tank is at 0,0)
+			# Sixth column (tank is at 0,0)
 			Vector2i(0, -2), Vector2i(0, -1), Vector2i(0, 1), Vector2i(0, 2),
-			# Fifth column (behind tank)
+			# Seventh column (behind tank)
 			Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1)
 		]
 	
@@ -272,6 +292,96 @@ func check_for_destroyable_at_position(pos: Vector2i, occupied_positions: Dictio
 	
 	return {}  # Empty dict if nothing to destroy
 
+# Update the move_randomly function to include hunting behavior
+func move_with_hunting(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	# First detect any potential targets
+	detect_targets_in_vision(occupied_positions, grid_size)
+	
+	# Decrease hunting cooldown if active
+	if hunting_cooldown > 0:
+		hunting_cooldown -= 1
+		if hunting_cooldown <= 0:
+			current_target = null
+			target_last_seen_position = null
+	
+	# If we have a target, move towards it
+	if current_target != null and not (current_target is Entity and not current_target.visible) and not current_target.is_dead:
+		hunt_target(grid_size, occupied_positions)
+	elif target_last_seen_position != null and hunting_cooldown > 0:
+		# Target no longer visible but we remember position, continue hunting
+		move_towards_position(target_last_seen_position, grid_size, occupied_positions)
+	else:
+		# No targets, move randomly
+		var old_direction = facing_direction
+		movement.move_randomly(grid_size, occupied_positions)
+		
+		# If direction changed, update sprite
+		if old_direction != facing_direction:
+			update_sprite_for_direction()
+	
+	# Update debug visualization with new vision pattern
+	if debug_visualizer and debug_visualizer.is_visible:
+		debug_visualizer.show_vision_and_kill_area(calculate_vision_pattern(), calculate_kill_zone(), grid_size)
+
+# Hunt a specific target
+func hunt_target(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	# Update target position based on current location
+	target_last_seen_position = current_target.position_in_grid
+	
+	# Move towards target
+	move_towards_position(target_last_seen_position, grid_size, occupied_positions)
+
+# Move towards a specific position
+# Move towards a specific position
+func move_towards_position(target_pos: Vector2i, grid_size: Vector2i, occupied_positions: Dictionary) -> void:
+	# Calculate all possible moves
+	var possible_moves = movement.calculate_possible_moves(grid_size, occupied_positions)
+	
+	# If there are no possible moves, just update direction
+	if possible_moves.size() == 0:
+		# Just face towards the target
+		face_towards_position(target_pos)
+		return
+	
+	# Find the move that gets us closest to the target
+	var best_move = possible_moves[0]
+	var best_distance = best_move.distance_to(target_pos)
+	
+	for move in possible_moves:
+		var distance = move.distance_to(target_pos)
+		if distance < best_distance:
+			best_distance = distance
+			best_move = move
+	
+	# Calculate direction to the target (convert to Vector2 first for normalization)
+	var dir_vector = Vector2(target_pos - position_in_grid)
+	var direction = dir_vector.normalized()
+	
+	# Update facing direction
+	face_towards_position(target_pos)
+	
+	# Update position
+	position_in_grid = best_move
+	
+	# Update global position
+	movement.update_position()
+
+# Helper to determine facing direction towards a position
+func face_towards_position(target_pos: Vector2i) -> void:
+	var dx = target_pos.x - position_in_grid.x
+	var dy = target_pos.y - position_in_grid.y
+	
+	# Determine primary direction (horizontal or vertical)
+	if abs(dx) > abs(dy):
+		# Horizontal movement is primary
+		facing_direction = Vector2i(sign(dx), 0)
+	else:
+		# Vertical movement is primary
+		facing_direction = Vector2i(0, sign(dy))
+	
+	# Update sprite with new direction
+	update_sprite_for_direction()
+
 # Delegate to movement component
 func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 	var old_direction = facing_direction
@@ -284,18 +394,33 @@ func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 	# Update debug visualization with new vision pattern
 	if debug_visualizer and debug_visualizer.is_visible:
 		debug_visualizer.show_vision_and_kill_area(calculate_vision_pattern(), calculate_kill_zone(), grid_size)
+# Replace the update_sprite_for_direction function with this more robust version:
 
-# Update sprite based on current direction
 func update_sprite_for_direction() -> void:
-	var atlas_coords = sprite_atlas[facing_direction]
+	var atlas_coords: Vector2i
 	
+	# Set default value in case no match is found (though this shouldn't happen)
+	atlas_coords = Vector2i(9, 20)  # Default to "up" direction
+	
+	# Convert Vector2i direction to string key
+	if facing_direction == Vector2i(0, -1):
+		atlas_coords = sprite_atlas["up"]
+	elif facing_direction == Vector2i(0, 1):
+		atlas_coords = sprite_atlas["down"]
+	elif facing_direction == Vector2i(1, 0):
+		atlas_coords = sprite_atlas["right"]
+	elif facing_direction == Vector2i(-1, 0):
+		atlas_coords = sprite_atlas["left"]
+	
+	# Make sure we have valid sprite node before trying to update it
 	if get_child_count() > 0 and get_child(0) is Sprite2D:
 		var sprite_node = get_child(0) as Sprite2D
-		sprite_node.region_rect = Rect2(atlas_coords.x * 16, atlas_coords.y * 16, 16, 16)
-		
-		# Handle flipping for left direction
-		sprite_node.flip_h = (facing_direction == Vector2i(-1, 0))  # Flip if facing left
-
+		if atlas_coords:  # Add null check before trying to access x property
+			sprite_node.region_rect = Rect2(atlas_coords.x * 16, atlas_coords.y * 16, 16, 16)
+			
+			# Handle flipping for left direction
+			sprite_node.flip_h = (facing_direction == Vector2i(-1, 0))  # Flip if facing left
+			
 # Helper function to set opacity (useful for preview)
 func set_opacity(opacity: float) -> void:
 	if get_child_count() > 0 and get_child(0) is Sprite2D:
@@ -306,3 +431,37 @@ func set_opacity(opacity: float) -> void:
 # Toggle debug visualization
 func set_debug_visibility(visible: bool) -> void:
 	debug_visualizer.set_visibility(visible)
+
+func detect_targets_in_vision(occupied_positions: Dictionary, grid_size: Vector2i) -> void:
+	# Clear previous detections
+	detected_targets.clear()
+	
+	# Get vision area
+	var vision = calculate_vision_pattern()
+	
+	# Check every cell in vision
+	for cell in vision:
+		# Skip if out of bounds
+		if cell.x < 0 or cell.x >= grid_size.x or cell.y < 0 or cell.y >= grid_size.y:
+			continue
+			
+		# Check if there's an object at this position
+		var pos_string = str(cell.x) + "," + str(cell.y)
+		if occupied_positions.has(pos_string):
+			var object = occupied_positions[pos_string]
+			
+			# If it's an entity or tank from another team, add to targets
+			# Skip entities that are not visible (in houses)
+			if object.team != team:
+				if (object is Entity and object.visible) or (object is Tank and not object.is_dead):
+					detected_targets.append({
+						"object": object,
+						"position": cell,
+						"type": "entity" if object is Entity else "tank"
+					})
+					
+					# Set this as the current target if we don't have one
+					if current_target == null:
+						current_target = object
+						target_last_seen_position = cell
+						hunting_cooldown = 10  # Set hunting duration
