@@ -972,8 +972,11 @@ func spawn_random_ufo() -> void:
 	
 	# Create the UFO
 	var ufo = ufo_scene.instantiate() as UFO
-	ufo.initialize(color, team_name)
-	ufo.position_in_grid = ufo_pos
+	
+	# Initialize the UFO with position and game reference
+	ufo.initialize(color, team_name, ufo_pos, self)
+	
+	# Set global position based on grid position
 	ufo.global_position = Vector2(ufo_pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
 							ufo_pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
 	
@@ -986,11 +989,9 @@ func spawn_random_ufo() -> void:
 	add_child(ufo)
 	ufos.append(ufo)
 	
-	# Mark this position as occupied
-	var pos_string = str(ufo_pos.x) + "," + str(ufo_pos.y)
-	occupied_positions[pos_string] = ufo
-	
 	print("UFO spawned for team: ", team_name, " at position: ", ufo_pos)
+	
+	
 	
 # Add this function to process UFOs each iteration
 func process_ufos() -> void:
@@ -1050,17 +1051,14 @@ func remove_ufo(ufo: UFO) -> void:
 	if index != -1:
 		ufos.remove_at(index)
 	
-	# Remove from occupied positions
-	var pos_string = str(ufo.position_in_grid.x) + "," + str(ufo.position_in_grid.y)
-	if occupied_positions.has(pos_string) and occupied_positions[pos_string] == ufo:
-		occupied_positions.erase(pos_string)
+	# The occupied position is already cleared in the UFO's process_round method
+	# when remaining_rounds reaches 0
 	
 	# Free the UFO node
 	ufo.queue_free()
-	print("UFO disappeared")
+	print("UFO disappeared from position: ", ufo.position_in_grid)
 
 # Signal handler for UFO disappearance
 func on_ufo_disappeared(ufo: UFO) -> void:
 	if not ufos_to_remove.has(ufo):
 		ufos_to_remove.append(ufo)
-		

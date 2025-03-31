@@ -9,9 +9,11 @@ var ufo_color: Color = Color(1.0, 1.0, 1.0)  # Default white color
 var team: String = "None"
 
 var position_in_grid: Vector2i
-var remaining_rounds: int = 2
-var max_people_spawned: int = 3
+var remaining_rounds: int = 3
+var max_people_spawned: int = 5
 var people_spawned_this_round: int = 0
+
+var game_node  # Reference to the game node to access occupied positions
 
 func _init(color: Color = Color(1.0, 1.0, 1.0), team_name: String = "None") -> void:
 	ufo_color = color
@@ -29,18 +31,36 @@ func _ready() -> void:
 	
 	add_child(sprite_node)
 
-func initialize(color: Color, team_name: String) -> void:
+	# Mark this position as occupied
+	if game_node:
+		var pos_string = str(position_in_grid.x) + "," + str(position_in_grid.y)
+		game_node.occupied_positions[pos_string] = self
+
+func initialize(color: Color, team_name: String, grid_pos: Vector2i, game_ref) -> void:
 	ufo_color = color
 	team = team_name
+	position_in_grid = grid_pos
+	game_node = game_ref
 	
 	# Update sprite color if it exists
 	if get_child_count() > 0 and get_child(0) is Sprite2D:
 		get_child(0).modulate = ufo_color
+	
+	# Mark the cell as occupied
+	if game_node:
+		var pos_string = str(position_in_grid.x) + "," + str(position_in_grid.y)
+		game_node.occupied_positions[pos_string] = self
 
 # Decrement rounds left and return true if UFO should disappear
 func process_round() -> bool:
 	remaining_rounds -= 1
 	people_spawned_this_round = 0
+	
+	# If the UFO disappears, free its cell
+	if remaining_rounds <= 0 and game_node:
+		var pos_string = str(position_in_grid.x) + "," + str(position_in_grid.y)
+		game_node.occupied_positions.erase(pos_string)
+	
 	return remaining_rounds <= 0
 
 # Try to spawn an entity at a given position
@@ -48,7 +68,12 @@ func spawn_entity(pos: Vector2i, entity_scene: PackedScene, game_node) -> bool:
 	# Check if we've already spawned max people this round
 	if people_spawned_this_round >= max_people_spawned:
 		return false
-		
+	
+	# Check if the target position is occupied
+	var pos_string = str(pos.x) + "," + str(pos.y)
+	if pos_string in game_node.occupied_positions:
+		return false  # Prevent spawning over the UFO or other entities
+
 	# Create a new entity
 	var entity = entity_scene.instantiate() as Entity
 	
@@ -77,7 +102,6 @@ func spawn_entity(pos: Vector2i, entity_scene: PackedScene, game_node) -> bool:
 	game_node.entities.append(entity)
 	
 	# Mark this position as occupied
-	var pos_string = str(pos.x) + "," + str(pos.y)
 	game_node.occupied_positions[pos_string] = entity
 	
 	# If debug mode is on, show possible moves
