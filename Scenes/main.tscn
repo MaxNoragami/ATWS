@@ -1105,4 +1105,5 @@ ufo_scene = ExtResource("7_ynf5e")
 [node name="grid" parent="." instance=ExtResource("2_bo1nx")]
 
 [node name="tiles" type="TileMapLayer" parent="."]
+position = Vector2(0, 1)
 tile_set = SubResource("TileSet_21xkr")
