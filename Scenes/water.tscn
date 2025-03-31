@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://dphqf7bxsw53e"]
+
+[ext_resource type="Script" uid="uid://34c6nyvqg0xn" path="res://Scripts/water.gd" id="1_gf5bf"]
+[ext_resource type="Texture2D" uid="uid://ynhpgth7b45v" path="res://Sprites/tiles.png" id="2_qq3op"]
+
+[node name="Water" type="Sprite2D"]
+script = ExtResource("1_gf5bf")
+sprite = ExtResource("2_qq3op")

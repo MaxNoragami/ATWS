@@ -7,6 +7,7 @@ extends Node2D
 @export var remains_scene: PackedScene
 @export var ufo_scene: PackedScene
 @export var sand_scene: PackedScene  # Add sand biome scene
+@export var water_scene: PackedScene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
@@ -43,7 +44,7 @@ var current_gender = Entity.Gender.MALE
 # Placement mode variables
 var placement_mode = false
 var placement_preview: Node2D = null
-enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK, SAND_BIOME }
+enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK, SAND_BIOME, WATER_BIOME }
 var current_placement_type = PlacementType.ENTITY
 
 # Debug mode
@@ -99,6 +100,10 @@ func create_placement_preview() -> void:
 		placement_preview = sand_scene.instantiate() as SandBiome
 		# Sand biome doesn't need team color, but we'll create a generic preview
 		placement_preview.set_opacity(0.5)  # 50% transparency for preview
+	elif current_placement_type == PlacementType.WATER_BIOME:
+		placement_preview = water_scene.instantiate() as WaterBiome
+		# Water biome doesn't need team color, but we'll create a generic preview
+		placement_preview.set_opacity(0.5)
 	
 	placement_preview.visible = false  # Hide initially until placement mode is activated
 	add_child(placement_preview)
@@ -132,6 +137,13 @@ func _process(delta: float) -> void:
 # Update the occupied positions dictionary
 func update_occupied_positions() -> void:
 	occupied_positions.clear()
+	
+	# Add water biomes to occupied positions (but not sand - keep original behavior)
+	for pos_string in biomes.keys():
+		# Only add water biomes to occupied positions
+		# Sand biomes should not block movement (they just slow it down)
+		if biomes[pos_string] is WaterBiome:
+			occupied_positions[pos_string] = biomes[pos_string]
 	
 	# Add entities to occupied positions
 	for entity in entities:
@@ -218,7 +230,7 @@ func update_placement_preview() -> void:
 										   grid_pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
 	
 	# Update the team color of the preview (not applicable to biomes)
-	if current_placement_type != PlacementType.SAND_BIOME:
+	if current_placement_type != PlacementType.SAND_BIOME && current_placement_type != PlacementType.WATER_BIOME:
 		var team_name = team_names[current_team_index]
 		var color = teams[team_name]
 		var preview_color = Color(color.r, color.g, color.b, 0.5)  # 50% transparency
@@ -274,6 +286,9 @@ func _input(event) -> void:
 		elif current_placement_type == PlacementType.TANK:
 			current_placement_type = PlacementType.SAND_BIOME
 			print("Placement type: Sand Biome")
+		elif current_placement_type == PlacementType.SAND_BIOME:
+			current_placement_type = PlacementType.WATER_BIOME
+			print("Placement type: Water Biome")
 		else:
 			current_placement_type = PlacementType.ENTITY
 			print("Placement type: Entity")
@@ -331,10 +346,14 @@ func process_iteration() -> void:
 			# Check if entity is on a sand biome
 			var pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
 			entity.is_in_sand = biomes.has(pos_string) and biomes[pos_string] is SandBiome
+			entity.is_in_water = biomes.has(pos_string) and biomes[pos_string] is WaterBiome
 			
 			# For entities in sand, flip the movement flag each turn
 			if entity.is_in_sand:
 				entity.can_move_in_sand = !entity.can_move_in_sand
+
+			if entity.is_in_water:
+				print("WARNING: Entity found in water, this shouldn't happen!")
 	
 	# First check for reproduction opportunities
 	check_for_reproduction()
@@ -931,6 +950,30 @@ func place_at_preview() -> void:
 		
 		print("Sand biome placed at position: ", grid_pos)
 		return
+	elif current_placement_type == PlacementType.WATER_BIOME:
+		# Check if there's already a biome at this position
+		if biomes.has(pos_string):
+			print("Biome already exists at this position, replacing it")
+			# Remove existing biome
+			if biomes[pos_string] != null:
+				biomes[pos_string].queue_free()
+		
+		# Create a new water biome tile at the preview position
+		var water = water_scene.instantiate() as WaterBiome
+		
+		# Make sure the texture is set
+		if water.sprite == null:
+			print("WARNING: Water sprite texture is not set! Check the inspector.")
+			if placement_preview is WaterBiome and placement_preview.sprite != null:
+				water.sprite = placement_preview.sprite
+		
+		# Initialize with position
+		water.initialize(grid_pos)
+		add_child(water)
+		biomes[pos_string] = water
+		
+		print("Water biome placed at position: ", grid_pos)
+		return
 	
 	# For other objects, check if the position is already occupied
 	if occupied_positions.has(pos_string):
@@ -1204,3 +1247,11 @@ func remove_ufo(ufo: UFO) -> void:
 func on_ufo_disappeared(ufo: UFO) -> void:
 	if not ufos_to_remove.has(ufo):
 		ufos_to_remove.append(ufo)
+
+func is_water_biome(pos: Vector2i) -> bool:
+	var pos_string = str(pos.x) + "," + str(pos.y)
+	
+	if biomes.has(pos_string):
+		return biomes[pos_string] is WaterBiome
+	
+	return false

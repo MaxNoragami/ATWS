@@ -5,6 +5,7 @@ class_name Entity
 
 var is_in_sand: bool = false
 var can_move_in_sand: bool = true  # Alternates between true/false when in sand
+var is_in_water: bool = false
 var is_preview: bool = false
 var vision_visualizer: EntityVisionVisualizer
 var detected_threats: Array[Tank] = []
@@ -90,6 +91,7 @@ func _ready() -> void:
 	
 	# Initial age-based sprite update
 	update_sprite_for_age_and_gender()
+
 
 # Visual indicator for entity stuck in sand
 func _process(delta: float) -> void:
@@ -311,6 +313,27 @@ func move_with_ai(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 		if flee_cooldown <= 0:
 			is_fleeing = false
 	
+	# For water tiles, we need to check valid moves before deciding what to do
+	var valid_moves = movement.calculate_possible_moves(grid_size, occupied_positions)
+	# Remove any water tiles from valid moves
+	var final_moves: Array[Vector2i] = []
+	for move in valid_moves:
+		var pos_string = str(move.x) + "," + str(move.y)
+		var is_water = false
+		
+		# Check if this move would place us on a water tile
+		if occupied_positions.has(pos_string):
+			var obj = occupied_positions[pos_string]
+			if obj is WaterBiome:
+				is_water = true
+		
+		if not is_water:
+			final_moves.append(move)
+			
+	# Replace valid_moves with our filtered list (if needed)
+	if final_moves.size() > 0:
+		valid_moves = final_moves
+
 	# If fleeing from a threat
 	if is_fleeing and detected_threats.size() > 0:
 		# Try to enter a safe house if possible
