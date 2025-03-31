@@ -69,11 +69,15 @@ func spawn_entity(pos: Vector2i, entity_scene: PackedScene, game_node) -> bool:
 	if people_spawned_this_round >= max_people_spawned:
 		return false
 	
+	# Explicitly prevent spawning on the UFO itself
+	if pos == position_in_grid:
+		return false
+	
 	# Check if the target position is occupied
 	var pos_string = str(pos.x) + "," + str(pos.y)
-	if pos_string in game_node.occupied_positions:
-		return false  # Prevent spawning over the UFO or other entities
-
+	if game_node.occupied_positions.has(pos_string):
+		return false  # Position is already occupied by something else
+	
 	# Create a new entity
 	var entity = entity_scene.instantiate() as Entity
 	

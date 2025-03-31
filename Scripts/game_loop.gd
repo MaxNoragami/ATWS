@@ -144,6 +144,11 @@ func update_occupied_positions() -> void:
 		if not tank.is_dead:
 			var pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
 			occupied_positions[pos_string] = tank
+	
+	# Add UFOs to occupied positions
+	for ufo in ufos:
+		var pos_string = str(ufo.position_in_grid.x) + "," + str(ufo.position_in_grid.y)
+		occupied_positions[pos_string] = ufo
 		
 	# Add remains to occupied positions
 	for remain in remains:
@@ -994,7 +999,13 @@ func spawn_random_ufo() -> void:
 	
 	
 # Add this function to process UFOs each iteration
+# Add this function to process UFOs each iteration
 func process_ufos() -> void:
+	# First, ensure all UFO positions are marked as occupied
+	for ufo in ufos:
+		var pos_string = str(ufo.position_in_grid.x) + "," + str(ufo.position_in_grid.y)
+		occupied_positions[pos_string] = ufo
+	
 	for ufo in ufos:
 		# Try to spawn people around the UFO
 		try_spawn_ufo_entities(ufo)
