@@ -12,7 +12,7 @@ func _ready() -> void:
 	if not tank:
 		push_error("TankMovement must be a child of a Tank node")
 
-# Calculate all possible moves (4 directions, 1 square)
+
 func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionary) -> Array[Vector2i]:
 	possible_moves.clear()
 	
@@ -31,6 +31,17 @@ func calculate_possible_moves(grid_size: Vector2i, occupied_positions: Dictionar
 		if new_pos.x >= 0 and new_pos.x < grid_size.x and new_pos.y >= 0 and new_pos.y < grid_size.y:
 			# Check if position is already occupied
 			var pos_string = str(new_pos.x) + "," + str(new_pos.y)
+			
+			# Skip water biomes - tanks cannot move into or destroy water
+			var is_water = false
+			if occupied_positions.has(pos_string):
+				var obj = occupied_positions[pos_string]
+				if obj is WaterBiome:
+					is_water = true
+			
+			if is_water:
+				continue
+				
 			if not occupied_positions.has(pos_string):
 				possible_moves.append(new_pos)
 			# Special case: Remains don't block tank movement

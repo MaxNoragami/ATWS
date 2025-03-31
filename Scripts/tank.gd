@@ -239,23 +239,24 @@ func destroy_entities_in_vision(entities: Array, rigid_bodies: Array, houses: Ar
 			var object = occupied_positions[pos_string]
 			
 			# Destroy only enemy entities/objects (different team)
-			if object.team != team:
-				if object is Entity and object.visible:
-					# Found an enemy entity in kill zone - mark for destruction
-					destroyed_objects.append({
-						"type": "entity",
-						"object": object,
-						"position": pos,
-						"team": object.team
-					})
-				elif object is Tank and not object.is_dead:
-					# Found an enemy tank in kill zone - mark for destruction
-					destroyed_objects.append({
-						"type": "tank",
-						"object": object,
-						"position": pos,
-						"team": object.team
-					})
+			if not (object is WaterBiome):
+				if object.team != team:
+					if object is Entity and object.visible:
+						# Found an enemy entity in kill zone - mark for destruction
+						destroyed_objects.append({
+							"type": "entity",
+							"object": object,
+							"position": pos,
+							"team": object.team
+						})
+					elif object is Tank and not object.is_dead:
+						# Found an enemy tank in kill zone - mark for destruction
+						destroyed_objects.append({
+							"type": "tank",
+							"object": object,
+							"position": pos,
+							"team": object.team
+						})
 	
 	return destroyed_objects
 
@@ -265,6 +266,10 @@ func check_for_destroyable_at_position(pos: Vector2i, occupied_positions: Dictio
 	if occupied_positions.has(pos_string):
 		var object = occupied_positions[pos_string]
 		
+		# Skip water biomes - tanks should not try to destroy them
+		if object is WaterBiome:
+			return {}  # Return empty dictionary
+
 		# Destroy only enemy objects (different team)
 		if object.team != team:
 			if object is RigidBody:
@@ -452,7 +457,7 @@ func detect_targets_in_vision(occupied_positions: Dictionary, grid_size: Vector2
 			
 			# If it's an entity or tank from another team, add to targets
 			# Skip entities that are not visible (in houses)
-			if object.team != team:
+			if not(object is WaterBiome) and object.team != team:
 				if (object is Entity and object.visible) or (object is Tank and not object.is_dead):
 					detected_targets.append({
 						"object": object,
