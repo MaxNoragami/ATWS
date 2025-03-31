@@ -3,6 +3,11 @@ extends Node2D
 # Entity script
 class_name Entity
 
+var is_in_sand: bool = false
+var can_move_in_sand: bool = true  # Alternates between true/false when in sand
+var is_preview: bool = false
+var vision_visualizer: EntityVisionVisualizer
+
 signal entity_died(entity)
 
 @export var sprite: Texture2D
@@ -54,6 +59,7 @@ func _init(color: Color = Color(1.0, 0.5, 0.5), team_name: String = "None") -> v
 
 func _ready() -> void:
 	# Create sprite
+	z_index = 5
 	var sprite_node = Sprite2D.new()
 	sprite_node.texture = sprite
 	sprite_node.region_enabled = true  # Enable region selection for atlas
@@ -71,14 +77,43 @@ func _ready() -> void:
 	# Add debug visualizer
 	debug_visualizer = MoveDebugVisualizer.new(self)
 	add_child(debug_visualizer)
+
+	# Add vision visualizer
+	vision_visualizer = EntityVisionVisualizer.new(self)
+	add_child(vision_visualizer)
 	
 	# Initial age-based sprite update
 	update_sprite_for_age_and_gender()
 
+# Visual indicator for entity stuck in sand
+func _process(delta: float) -> void:
+	# Skip visual effects for preview entities
+	if is_preview:
+		return
+        	
+	# Visual indication when entity is in sand and can't move
+	if is_in_sand and not can_move_in_sand:
+		# Make the entity slightly transparent when it's stuck in sand
+		if get_child_count() > 0 and get_child(0) is Sprite2D:
+			var sprite_node = get_child(0)
+			var original_color = entity_color
+			sprite_node.modulate = Color(original_color.r, original_color.g, original_color.b, 0.6)
+	else:
+		# Normal appearance
+		if get_child_count() > 0 and get_child(0) is Sprite2D:
+			var sprite_node = get_child(0)
+			var original_color = entity_color
+			sprite_node.modulate = Color(original_color.r, original_color.g, original_color.b, 1.0)
+
 # Update possible moves and debug visualization
+# Modify this function to show both movement and vision debug
 func update_possible_moves(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 	var moves = movement.calculate_possible_moves(grid_size, occupied_positions)
 	debug_visualizer.show_possible_moves(moves)
+	
+	# Update vision visualization as well
+	var vision = calculate_vision_area()
+	vision_visualizer.show_vision_area(vision)
 
 # Delegate to movement component
 func move_randomly(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
@@ -100,6 +135,42 @@ func age_up() -> void:
 	
 	# Update sprite based on new age
 	update_sprite_for_age_and_gender()
+
+# Add this function to calculate the vision area based on age period
+func calculate_vision_area() -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	var period = get_age_period()
+	
+	# Define vision patterns for each age group
+	if period == "child":
+		# 3x3 square
+		for x in range(-1, 2):
+			for y in range(-1, 2):
+				if not (x == 0 and y == 0):  # Skip entity's position
+					result.append(Vector2i(x, y))
+	elif period == "elder":
+		# 5x5 square with corners removed
+		for x in range(-2, 3):
+			for y in range(-2, 3):
+				if not (x == 0 and y == 0):  # Skip entity's position
+					if not ((abs(x) == 2 and abs(y) == 2)):  # Skip corners
+						result.append(Vector2i(x, y))
+	else:  # adult
+		# 7x7 square with outer corners removed
+		for x in range(-3, 4):
+			for y in range(-3, 4):
+				if not (x == 0 and y == 0):  # Skip entity's position
+					if not ((abs(x) == 3 and abs(y) == 3) or  # Skip outer corners
+							(abs(x) == 3 and abs(y) == 2) or
+							(abs(x) == 2 and abs(y) == 3)):
+						result.append(Vector2i(x, y))
+	
+	# Translate to absolute grid positions
+	var absolute_result: Array[Vector2i] = []
+	for pos in result:
+		absolute_result.append(position_in_grid + pos)
+	
+	return absolute_result
 
 # Check if entity is an adult
 func is_adult() -> bool:
@@ -174,6 +245,9 @@ func set_opacity(opacity: float) -> void:
 		var current_color = sprite_node.modulate
 		sprite_node.modulate = Color(current_color.r, current_color.g, current_color.b, opacity)
 
+	is_preview = true
+
 # Toggle debug visualization
 func set_debug_visibility(visible: bool) -> void:
 	debug_visualizer.set_visibility(visible)
+	vision_visualizer.set_visibility(visible)

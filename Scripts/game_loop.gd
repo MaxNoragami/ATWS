@@ -6,6 +6,7 @@ extends Node2D
 @export var tank_scene: PackedScene
 @export var remains_scene: PackedScene
 @export var ufo_scene: PackedScene
+@export var sand_scene: PackedScene  # Add sand biome scene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
@@ -17,6 +18,7 @@ var occupied_positions: Dictionary = {}  # Stores all occupied grid positions
 var pending_remains: Dictionary = {}  # Stores positions where destruction happened, waiting for tank to move off
 var ufos: Array[UFO] = []
 var ufos_to_remove: Array[UFO] = []
+var biomes: Dictionary = {}  # Stores biome tiles by position string
 
 var teams = {
 	"Blue": Color(0.0, 0.0, 1.0),
@@ -41,7 +43,7 @@ var current_gender = Entity.Gender.MALE
 # Placement mode variables
 var placement_mode = false
 var placement_preview: Node2D = null
-enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK }
+enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK, SAND_BIOME }
 var current_placement_type = PlacementType.ENTITY
 
 # Debug mode
@@ -80,15 +82,23 @@ func create_placement_preview() -> void:
 		var entity_preview = placement_preview as Entity
 		entity_preview.gender = current_gender
 		entity_preview.update_sprite_for_age_and_gender()
+
+		# Mark as preview to prevent visual effects
+		entity_preview.is_preview = true
+
 	elif current_placement_type == PlacementType.RIGID_BODY:
 		placement_preview = rigid_body_scene.instantiate() as RigidBody
 		placement_preview.initialize(preview_color, team_name)
 	elif current_placement_type == PlacementType.HOUSE:
 		placement_preview = house_scene.instantiate() as House
 		placement_preview.initialize(preview_color, team_name)
-	else:  # TANK
+	elif current_placement_type == PlacementType.TANK:
 		placement_preview = tank_scene.instantiate() as Tank
 		placement_preview.initialize(preview_color, team_name)
+	elif current_placement_type == PlacementType.SAND_BIOME:
+		placement_preview = sand_scene.instantiate() as SandBiome
+		# Sand biome doesn't need team color, but we'll create a generic preview
+		placement_preview.set_opacity(0.5)  # 50% transparency for preview
 	
 	placement_preview.visible = false  # Hide initially until placement mode is activated
 	add_child(placement_preview)
@@ -207,15 +217,16 @@ func update_placement_preview() -> void:
 	placement_preview.global_position = Vector2(grid_pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
 										   grid_pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
 	
-	# Update the team color of the preview
-	var team_name = team_names[current_team_index]
-	var color = teams[team_name]
-	var preview_color = Color(color.r, color.g, color.b, 0.5)  # 50% transparency
-	
-	# Update sprite color
-	if placement_preview.get_child_count() > 0 and placement_preview.get_child(0) is Sprite2D:
-		placement_preview.get_child(0).modulate = preview_color
+	# Update the team color of the preview (not applicable to biomes)
+	if current_placement_type != PlacementType.SAND_BIOME:
+		var team_name = team_names[current_team_index]
+		var color = teams[team_name]
+		var preview_color = Color(color.r, color.g, color.b, 0.5)  # 50% transparency
 		
+		# Update sprite color
+		if placement_preview.get_child_count() > 0 and placement_preview.get_child(0) is Sprite2D:
+			placement_preview.get_child(0).modulate = preview_color
+			
 	# If house, update entrance positions
 	if current_placement_type == PlacementType.HOUSE:
 		var house_preview = placement_preview as House
@@ -260,6 +271,9 @@ func _input(event) -> void:
 		elif current_placement_type == PlacementType.HOUSE:
 			current_placement_type = PlacementType.TANK
 			print("Placement type: Tank")
+		elif current_placement_type == PlacementType.TANK:
+			current_placement_type = PlacementType.SAND_BIOME
+			print("Placement type: Sand Biome")
 		else:
 			current_placement_type = PlacementType.ENTITY
 			print("Placement type: Entity")
@@ -302,12 +316,25 @@ func _input(event) -> void:
 	if event.is_action_pressed("place_entity") and placement_mode:
 		place_at_preview()
 
+		
+
 func process_iteration() -> void:
 	# Update occupied positions for collision detection
 	update_occupied_positions()
 	
 	# First, process any pending remains aging
 	process_remains()
+	
+	# Check which entities are in sand biomes and update their movement flags
+	for entity in entities:
+		if not entity.is_dead and entity.visible:
+			# Check if entity is on a sand biome
+			var pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
+			entity.is_in_sand = biomes.has(pos_string) and biomes[pos_string] is SandBiome
+			
+			# For entities in sand, flip the movement flag each turn
+			if entity.is_in_sand:
+				entity.can_move_in_sand = !entity.can_move_in_sand
 	
 	# First check for reproduction opportunities
 	check_for_reproduction()
@@ -391,17 +418,23 @@ func process_iteration() -> void:
 				# Still age the entity
 				entity.age_up()
 				continue
+			
+			# Check if the entity is allowed to move this turn (sand effect)
+			var can_move = true
+			if entity.is_in_sand:
+				can_move = entity.can_move_in_sand
+			
+			if can_move:	
+				# Get current position and remove from occupied positions
+				var old_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
+				occupied_positions.erase(old_pos_string)
 				
-			# Get current position and remove from occupied positions
-			var old_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
-			occupied_positions.erase(old_pos_string)
-			
-			# Move entity
-			entity.move_randomly(grid_size, occupied_positions)
-			
-			# Add new position to occupied positions
-			var new_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
-			occupied_positions[new_pos_string] = entity
+				# Move entity
+				entity.move_randomly(grid_size, occupied_positions)
+				
+				# Add new position to occupied positions
+				var new_pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
+				occupied_positions[new_pos_string] = entity
 			
 			# Age entity
 			entity.age_up()
@@ -670,14 +703,16 @@ func check_for_reproduction() -> void:
 	var adults_by_position = {}
 	
 	# First, collect all adult entities by their positions
+	# Skip entities in sand biomes
 	for entity in entities:
-		if not entity.is_dead and entity.is_adult() and entity.visible:
+		if not entity.is_dead and entity.is_adult() and entity.visible and not entity.is_in_sand:
 			var pos_string = str(entity.position_in_grid.x) + "," + str(entity.position_in_grid.y)
 			adults_by_position[pos_string] = entity
 	
 	# Check each adult entity for potential reproduction
+	# Also skip entities in sand biomes
 	for entity in entities:
-		if entity.is_dead or not entity.is_adult() or entity.had_reproduction_this_turn or not entity.visible:
+		if entity.is_dead or not entity.is_adult() or entity.had_reproduction_this_turn or not entity.visible or entity.is_in_sand:
 			continue
 		
 		# Check all 8 adjacent cells for compatible partners
@@ -830,8 +865,36 @@ func remove_entity(entity) -> void:
 	print("Entity died at age: ", entity.age)
 
 func place_at_preview() -> void:
-	# Check if the position is already occupied
-	var pos_string = str(placement_preview.position_in_grid.x) + "," + str(placement_preview.position_in_grid.y)
+	var grid_pos = placement_preview.position_in_grid
+	var pos_string = str(grid_pos.x) + "," + str(grid_pos.y)
+	
+	# For biomes, we don't need to check if position is occupied since they can coexist with entities
+	if current_placement_type == PlacementType.SAND_BIOME:
+		# Check if there's already a biome at this position
+		if biomes.has(pos_string):
+			print("Biome already exists at this position, replacing it")
+			# Remove existing biome
+			if biomes[pos_string] != null:
+				biomes[pos_string].queue_free()
+		
+		# Create a new sand biome tile at the preview position
+		var sand = sand_scene.instantiate() as SandBiome
+		
+		# Make sure the texture is set
+		if sand.sprite == null:
+			print("WARNING: Sand sprite texture is not set! Check the inspector.")
+			if placement_preview is SandBiome and placement_preview.sprite != null:
+				sand.sprite = placement_preview.sprite
+		
+		# Initialize with position
+		sand.initialize(grid_pos)
+		add_child(sand)
+		biomes[pos_string] = sand
+		
+		print("Sand biome placed at position: ", grid_pos)
+		return
+	
+	# For other objects, check if the position is already occupied
 	if occupied_positions.has(pos_string):
 		print("Cannot place: position already occupied")
 		return
@@ -927,6 +990,7 @@ func place_at_preview() -> void:
 			tank.set_debug_visibility(true)
 			tank.update_possible_moves(grid_size, occupied_positions)
 
+
 func spawn_random_ufo() -> void:
 	# First find all valid positions (empty cells with at least 3 empty adjacent cells)
 	var valid_positions = []
@@ -999,7 +1063,6 @@ func spawn_random_ufo() -> void:
 	
 	
 # Add this function to process UFOs each iteration
-# Add this function to process UFOs each iteration
 func process_ufos() -> void:
 	# First, ensure all UFO positions are marked as occupied
 	for ufo in ufos:
@@ -1019,6 +1082,36 @@ func process_ufos() -> void:
 	for ufo in ufos_to_remove:
 		remove_ufo(ufo)
 	ufos_to_remove.clear()
+
+# Check which biome an entity is on (if any)
+func get_biome_at_position(pos: Vector2i) -> Node2D:
+	var pos_string = str(pos.x) + "," + str(pos.y)
+	if biomes.has(pos_string):
+		return biomes[pos_string]
+	return null
+
+# Apply biome effects to an entity
+func apply_biome_effects(entity: Entity) -> void:
+	var biome = get_biome_at_position(entity.position_in_grid)
+	
+	# Reset all biome-related flags first
+	entity.is_in_sand = false
+	
+	if biome is SandBiome:
+		# Mark entity as being in sand
+		entity.is_in_sand = true
+		
+		# Visual indication will be handled in entity's _process
+		# Movement restriction is handled in process_iteration
+		
+		# Debug output
+		if debug_mode:
+			print("Entity on sand biome - movement status: ", "Can move" if entity.can_move_in_sand else "Stuck")
+			
+	# Other biome types can be added here in the future
+	# elif biome is WaterBiome:
+	#     handle water effects
+	# etc.
 
 # Add this function to handle spawning entities from UFOs
 func try_spawn_ufo_entities(ufo: UFO) -> void:

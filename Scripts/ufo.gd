@@ -20,6 +20,7 @@ func _init(color: Color = Color(1.0, 1.0, 1.0), team_name: String = "None") -> v
 	team = team_name
 
 func _ready() -> void:
+	z_index = 7
 	# Create sprite
 	var sprite_node = Sprite2D.new()
 	sprite_node.texture = sprite

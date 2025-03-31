@@ -11,6 +11,7 @@ var position_in_grid: Vector2i
 var lifetime: int = 1  # Disappears after 1 generation
 
 func _ready() -> void:
+	z_index = 4
 	# Create sprite if it doesn't exist
 	if get_child_count() == 0 or not get_child(0) is Sprite2D:
 		var sprite_node = Sprite2D.new()
