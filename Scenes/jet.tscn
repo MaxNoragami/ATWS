@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://cuko2ida55wn6"]
+
+[ext_resource type="Script" uid="uid://dgpm0teugngvh" path="res://Scripts/jet.gd" id="1_lbw7d"]
+[ext_resource type="Texture2D" uid="uid://ynhpgth7b45v" path="res://Sprites/tiles.png" id="2_t0ain"]
+
+[node name="Jet" type="Sprite2D"]
+script = ExtResource("1_lbw7d")
+sprite = ExtResource("2_t0ain")

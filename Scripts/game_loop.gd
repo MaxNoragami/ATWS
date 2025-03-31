@@ -8,6 +8,9 @@ extends Node2D
 @export var ufo_scene: PackedScene
 @export var sand_scene: PackedScene  # Add sand biome scene
 @export var water_scene: PackedScene
+@export var jet_scene: PackedScene
+@export var bomb_scene: PackedScene
+@export var plague_scene: PackedScene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []

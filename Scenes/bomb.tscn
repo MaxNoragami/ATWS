@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://c6a8utdi0hexp"]
+
+[ext_resource type="Script" uid="uid://ctwtrg68ak3i6" path="res://Scripts/bomb.gd" id="1_kdyat"]
+[ext_resource type="Texture2D" uid="uid://ynhpgth7b45v" path="res://Sprites/tiles.png" id="2_2fiif"]
+
+[node name="Bomb" type="Sprite2D"]
+script = ExtResource("1_kdyat")
+sprite = ExtResource("2_2fiif")
