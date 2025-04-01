@@ -11,6 +11,7 @@ extends Node2D
 @export var jet_scene: PackedScene
 @export var bomb_scene: PackedScene
 @export var plague_scene: PackedScene
+@export var boat_scene: PackedScene
 
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
@@ -23,6 +24,7 @@ var pending_remains: Dictionary = {}  # Stores positions where destruction happe
 var ufos: Array[UFO] = []
 var ufos_to_remove: Array[UFO] = []
 var biomes: Dictionary = {}  # Stores biome tiles by position string
+var boats: Array[Boat] = []
 
 var teams = {
 	"Blue": Color(0.0, 0.0, 1.0),
@@ -47,7 +49,7 @@ var current_gender = Entity.Gender.MALE
 # Placement mode variables
 var placement_mode = false
 var placement_preview: Node2D = null
-enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK, SAND_BIOME, WATER_BIOME }
+enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK, SAND_BIOME, WATER_BIOME, BOAT }
 var current_placement_type = PlacementType.ENTITY
 
 # Debug mode
@@ -67,6 +69,7 @@ func create_placement_preview() -> void:
 	# Remove any existing preview
 	if placement_preview:
 		placement_preview.queue_free()
+		placement_preview = null  # Important: set to null after freeing
 	
 	var team_name = team_names[current_team_index]
 	var color = teams[team_name]
@@ -107,9 +110,14 @@ func create_placement_preview() -> void:
 		placement_preview = water_scene.instantiate() as WaterBiome
 		# Water biome doesn't need team color, but we'll create a generic preview
 		placement_preview.set_opacity(0.5)
+	elif current_placement_type == PlacementType.BOAT:
+		placement_preview = boat_scene.instantiate() as Boat
+		placement_preview.initialize(preview_color, team_name)
+		placement_preview.set_opacity(0.5)  # 50% transparency for preview
 	
-	placement_preview.visible = false  # Hide initially until placement mode is activated
-	add_child(placement_preview)
+	if placement_preview:  # Check if preview is valid before adding
+		placement_preview.visible = false  # Hide initially until placement mode is activated
+		add_child(placement_preview)
 
 func _process(delta: float) -> void:
 	if placement_mode:
@@ -169,6 +177,11 @@ func update_occupied_positions() -> void:
 		if not tank.is_dead:
 			var pos_string = str(tank.position_in_grid.x) + "," + str(tank.position_in_grid.y)
 			occupied_positions[pos_string] = tank
+			
+	for boat in boats:
+		if not boat.is_dead:
+			var pos_string = str(boat.position_in_grid.x) + "," + str(boat.position_in_grid.y)
+			occupied_positions[pos_string] = boat
 	
 	# Add UFOs to occupied positions
 	for ufo in ufos:
@@ -219,6 +232,14 @@ func is_position_available(pos: Vector2i) -> bool:
 	return true
 
 func update_placement_preview() -> void:
+	# Check if the preview is valid
+	if not is_instance_valid(placement_preview):
+		# Recreate if it's not valid
+		create_placement_preview()
+		if not placement_preview:
+			print("Failed to create placement preview")
+			return
+	
 	# Get mouse position and convert to grid position
 	var mouse_pos = get_global_mouse_position()
 	var grid_pos = Vector2i(floor(mouse_pos.x / Game.CELL_SIZE.x), floor(mouse_pos.y / Game.CELL_SIZE.y))
@@ -228,7 +249,11 @@ func update_placement_preview() -> void:
 	grid_pos.y = clamp(grid_pos.y, 0, grid_size.y - 1)
 	
 	# Update preview position
-	placement_preview.position_in_grid = grid_pos
+	if placement_preview.has_method("set_position_in_grid"):
+		placement_preview.set_position_in_grid(grid_pos)
+	else:
+		placement_preview.position_in_grid = grid_pos
+		
 	placement_preview.global_position = Vector2(grid_pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
 										   grid_pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
 	
@@ -246,6 +271,16 @@ func update_placement_preview() -> void:
 	if current_placement_type == PlacementType.HOUSE:
 		var house_preview = placement_preview as House
 		house_preview.update_entrance_positions()
+		
+	# If boat, check if it's on water (highlight in red if not on water)
+	if current_placement_type == PlacementType.BOAT:
+		var pos_string = str(grid_pos.x) + "," + str(grid_pos.y)
+		var is_water = biomes.has(pos_string) and biomes[pos_string] is WaterBiome
+		
+		if not is_water:
+			# Highlight in red to indicate invalid placement
+			if placement_preview.get_child_count() > 0 and placement_preview.get_child(0) is Sprite2D:
+				placement_preview.get_child(0).modulate = Color(1.0, 0.3, 0.3, 0.5)  # Red with transparency
 
 func _input(event) -> void:
 	if event.is_action_pressed("next_iteration"):
@@ -292,6 +327,9 @@ func _input(event) -> void:
 		elif current_placement_type == PlacementType.SAND_BIOME:
 			current_placement_type = PlacementType.WATER_BIOME
 			print("Placement type: Water Biome")
+		elif current_placement_type == PlacementType.WATER_BIOME:
+			current_placement_type = PlacementType.BOAT
+			print("Placement type: Boat")
 		else:
 			current_placement_type = PlacementType.ENTITY
 			print("Placement type: Entity")
@@ -422,6 +460,21 @@ func process_iteration() -> void:
 	# Create a copy of the entities array to safely iterate
 	var current_entities = entities.duplicate()
 	
+	for boat in boats:
+		if boat.is_dead:
+			continue
+			
+		# Get current position and remove from occupied positions
+		var old_pos_string = str(boat.position_in_grid.x) + "," + str(boat.position_in_grid.y)
+		occupied_positions.erase(old_pos_string)
+
+		# Move the boat randomly on water
+		boat.move_randomly(grid_size, occupied_positions, biomes)
+
+		# Add new position to occupied positions
+		var new_pos_string = str(boat.position_in_grid.x) + "," + str(boat.position_in_grid.y)
+		occupied_positions[new_pos_string] = boat
+	
 	# Process each entity's movement and aging
 	for entity in current_entities:
 		if not entity.is_dead:
@@ -487,6 +540,10 @@ func process_iteration() -> void:
 		for tank in tanks:
 			if not tank.is_dead:
 				tank.update_possible_moves(grid_size, occupied_positions)
+				
+		for boat in boats:
+			if not boat.is_dead:
+				boat.update_possible_moves(grid_size, occupied_positions, biomes)
 
 # Check for tank-to-tank combat
 func check_for_tank_combat() -> void:
@@ -977,7 +1034,60 @@ func place_at_preview() -> void:
 		
 		print("Water biome placed at position: ", grid_pos)
 		return
-	
+		
+	# Replace just the boat part of the place_at_preview function:
+
+	elif current_placement_type == PlacementType.BOAT:
+		# Check if placement_preview is valid
+		if not is_instance_valid(placement_preview):
+			print("Invalid placement preview")
+			return
+			
+		# Check if this position has water (boats can only be placed on water)
+		var is_water = false
+		if biomes.has(pos_string) and biomes[pos_string] is WaterBiome:
+			is_water = true
+			
+		if not is_water:
+			print("Cannot place boat: position must be water")
+			return
+			
+		# Check if the position is already occupied
+		if occupied_positions.has(pos_string):
+			print("Cannot place: position already occupied")
+			return
+			
+		# Get team info
+		var team_name = team_names[current_team_index]
+		var color = teams[team_name]
+
+		# Create a new boat at the preview position
+		var boat = boat_scene.instantiate() as Boat
+		if not boat:
+			print("Failed to instantiate boat scene")
+			return
+			
+		boat.initialize(color, team_name)
+
+		# Safely get the grid position from the preview
+		var preview_grid_pos = grid_pos  # Use the grid_pos we already have
+		boat.position_in_grid = preview_grid_pos
+		boat.global_position = Vector2(preview_grid_pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
+								preview_grid_pos.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
+
+		add_child(boat)
+		boats.append(boat)
+
+		# Mark this position as occupied immediately
+		occupied_positions[pos_string] = boat
+
+		# If debug mode is on, show possible moves
+		if debug_mode:
+			boat.set_debug_visibility(true)
+			boat.update_possible_moves(grid_size, occupied_positions, biomes)
+			
+		print("Boat placed at position: ", preview_grid_pos)
+		return
 	# For other objects, check if the position is already occupied
 	if occupied_positions.has(pos_string):
 		print("Cannot place: position already occupied")

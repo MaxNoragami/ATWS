@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://brq5xgdn42alb"]
+[gd_scene load_steps=18 format=3 uid="uid://brq5xgdn42alb"]
 
 [ext_resource type="Script" path="res://Scripts/game_loop.gd" id="1_8gbba"]
 [ext_resource type="PackedScene" uid="uid://b60i628gttn5u" path="res://Scenes/grid.tscn" id="2_bo1nx"]
@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://cuko2ida55wn6" path="res://Scenes/jet.tscn" id="10_jkdf5"]
 [ext_resource type="PackedScene" uid="uid://c6a8utdi0hexp" path="res://Scenes/bomb.tscn" id="11_wsu2k"]
 [ext_resource type="PackedScene" uid="uid://nfwq1lh1mte8" path="res://Scenes/plague.tscn" id="12_k12tt"]
+[ext_resource type="PackedScene" uid="uid://cxw1aj6juk2ab" path="res://Scenes/boat.tscn" id="13_wsu2k"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kry3j"]
 texture = ExtResource("4_jjvhh")
@@ -1111,6 +1112,7 @@ water_scene = ExtResource("9_d1ilt")
 jet_scene = ExtResource("10_jkdf5")
 bomb_scene = ExtResource("11_wsu2k")
 plague_scene = ExtResource("12_k12tt")
+boat_scene = ExtResource("13_wsu2k")
 
 [node name="grid" parent="." instance=ExtResource("2_bo1nx")]
 
