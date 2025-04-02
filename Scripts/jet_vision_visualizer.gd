@@ -1,13 +1,13 @@
 extends Node2D
-class_name EntityVisionVisualizer
+class_name JetVisionVisualizer
 
-var entity: Entity
+var jet: FighterJet
 var vision_area: Array[Vector2i] = []
 var debug_squares: Array[Node2D] = []
 var is_visible: bool = false
 
-func _init(parent_entity: Entity) -> void:
-	entity = parent_entity
+func _init(parent_jet: FighterJet) -> void:
+	jet = parent_jet
 
 func show_vision_area(vision: Array[Vector2i]) -> void:
 	vision_area = vision
@@ -37,16 +37,16 @@ func _draw() -> void:
 	if not is_visible:
 		return
 		
-	# Get entity's team color but make it more transparent than movement squares
-	var color = entity.entity_color
-	var transparent_color = Color(color.r, color.g, color.b, 0.15)  # Very transparent for vision
+	# Get jet's color but make it with red tint and semi-transparent
+	var color = jet.entity_color
+	var vision_color = Color(1.0, color.g * 0.5, color.b * 0.5, 0.3)
 	
 	# Draw squares for each vision cell
 	for i in range(debug_squares.size()):
 		var square_pos = debug_squares[i].global_position - global_position
 		var rect = Rect2(square_pos - Vector2(Game.CELL_SIZE.x / 2, Game.CELL_SIZE.y / 2), 
 						Game.CELL_SIZE)
-		draw_rect(rect, transparent_color, true)
+		draw_rect(rect, vision_color, true)
 
 func set_visibility(visible: bool) -> void:
 	is_visible = visible

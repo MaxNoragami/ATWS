@@ -1,5 +1,9 @@
 extends Node2D
 
+
+const FighterJet = preload("res://Scripts/jet.gd")
+const Bomb = preload("res://Scripts/bomb.gd")
+
 @export var entity_scene: PackedScene
 @export var rigid_body_scene: PackedScene
 @export var house_scene: PackedScene
@@ -23,6 +27,11 @@ var pending_remains: Dictionary = {}  # Stores positions where destruction happe
 var ufos: Array[UFO] = []
 var ufos_to_remove: Array[UFO] = []
 var biomes: Dictionary = {}  # Stores biome tiles by position string
+# Fighter jet variables
+var jets: Array[FighterJet] = []
+var bombs: Array[Bomb] = []
+var bombs_to_remove: Array[Bomb] = []
+var jets_to_remove: Array[FighterJet] = []
 
 var teams = {
 	"Blue": Color(0.0, 0.0, 1.0),
@@ -182,6 +191,20 @@ func update_occupied_positions() -> void:
 		# Remains don't block movement, so only add them if position is not already occupied
 		if not occupied_positions.has(pos_string):
 			occupied_positions[pos_string] = remain
+			
+	# Add jets to occupied positions (optional - jets move fast and don't need to block)
+	for jet in jets:
+		var pos_string = str(jet.position_in_grid.x) + "," + str(jet.position_in_grid.y)
+		# Only mark as occupied if not already occupied
+		if not occupied_positions.has(pos_string):
+			occupied_positions[pos_string] = jet
+			
+	# Add bombs to occupied positions (optional - bombs can overlap with other objects)
+	for bomb in bombs:
+		var pos_string = str(bomb.position_in_grid.x) + "," + str(bomb.position_in_grid.y)
+		# Only mark as occupied if not already occupied
+		if not occupied_positions.has(pos_string):
+			occupied_positions[pos_string] = bomb
 
 # Check if there are any available adjacent cells around a position
 func has_available_adjacent_cell(pos: Vector2i) -> bool:
@@ -307,6 +330,9 @@ func _input(event) -> void:
 			placement_preview.visible = placement_mode
 		print("Placement mode:", "ON" if placement_mode else "OFF")
 	
+	# Spawn fighter jet when J is pressed
+	if event.is_action_pressed("jet_appear") or (event is InputEventKey and event.keycode == KEY_J and event.pressed and not event.echo):
+		spawn_fighter_jet()
 	
 	if event.is_action_pressed("spawn_ufo") or (event is InputEventKey and event.keycode == KEY_H and event.pressed and not event.echo):
 		spawn_random_ufo()
@@ -329,12 +355,193 @@ func _input(event) -> void:
 				tank.set_debug_visibility(debug_mode)
 				if debug_mode:
 					tank.update_possible_moves(grid_size, occupied_positions)
+					
+		# Update jet debug visualization
+		for jet in jets:
+			jet.set_debug_visibility(debug_mode)
 	
 	# Place entity or rigid body at current position
 	if event.is_action_pressed("place_entity") and placement_mode:
 		place_at_preview()
 
+# Spawn a new fighter jet
+func spawn_fighter_jet() -> void:
+	# Choose a random team
+	var random_team_index = randi() % team_names.size()
+	var team_name = team_names[random_team_index]
+	var color = teams[team_name]
+	
+	# Choose a random starting position and direction
+	var start_pos: Vector2i
+	var direction: Vector2i
+	
+	# Randomly choose which edge to start from
+	var edge = randi() % 4
+	
+	match edge:
+		0:  # Top edge
+			start_pos = Vector2i(randi() % grid_size.x, 0)
+			direction = Vector2i(0, 1)  # Moving down
+		1:  # Right edge
+			start_pos = Vector2i(grid_size.x - 1, randi() % grid_size.y)
+			direction = Vector2i(-1, 0)  # Moving left
+		2:  # Bottom edge
+			start_pos = Vector2i(randi() % grid_size.x, grid_size.y - 1)
+			direction = Vector2i(0, -1)  # Moving up
+		3:  # Left edge
+			start_pos = Vector2i(0, randi() % grid_size.y)
+			direction = Vector2i(1, 0)  # Moving right
+	
+	# Create the jet
+	var jet = jet_scene.instantiate() as FighterJet
+	
+	# Initialize the jet
+	jet.initialize(color, team_name, start_pos, direction, self)
+	
+	# Connect signal for when jet exits grid
+	jet.connect("jet_exited", on_jet_exited)
+	
+	add_child(jet)
+	jets.append(jet)
+	
+	print("Fighter jet spawned for team: ", team_name, " at position: ", start_pos, " moving in direction: ", direction)
+
+# Handle jet exiting the grid
+func on_jet_exited(jet: FighterJet) -> void:
+	if not jets_to_remove.has(jet):
+		jets_to_remove.append(jet)
+
+# Remove a jet
+func remove_jet(jet: FighterJet) -> void:
+	# Remove from jets array
+	var index = jets.find(jet)
+	if index != -1:
+		jets.remove_at(index)
+	
+	# Free the jet node
+	jet.queue_free()
+	print("Fighter jet exited the grid")
+
+# Create a bomb at a specific position
+func create_bomb(pos: Vector2i, team_name: String) -> void:
+	var bomb = bomb_scene.instantiate() as Bomb
+	var color = teams[team_name]
+	
+	# Initialize the bomb
+	bomb.initialize(color, team_name, pos)
+	
+	# Connect explosion signal
+	bomb.connect("bomb_exploded", on_bomb_exploded)
+	
+	add_child(bomb)
+	bombs.append(bomb)
+	
+	print("Bomb dropped at position: ", pos, " by team: ", team_name)
+
+# Handle bomb explosion
+func on_bomb_exploded(bomb: Bomb, explosion_positions: Array) -> void:
+	# Add to removal queue
+	if not bombs_to_remove.has(bomb):
+		bombs_to_remove.append(bomb)
+	
+	# Create a list of objects to destroy
+	var objects_to_destroy = []
+	
+	# Check each position in the explosion area
+	for pos in explosion_positions:
+		var pos_string = str(pos.x) + "," + str(pos.y)
+		if occupied_positions.has(pos_string):
+			var object = occupied_positions[pos_string]
+			
+			# Determine what kind of object it is
+			if object is Entity and object.visible:
+				objects_to_destroy.append({
+					"type": "entity",
+					"object": object,
+					"position": pos,
+					"team": object.team
+				})
+			elif object is RigidBody:
+				objects_to_destroy.append({
+					"type": "rigid_body",
+					"object": object,
+					"position": pos,
+					"team": object.team
+				})
+			elif object is House:
+				var house = object as House
+				objects_to_destroy.append({
+					"type": "house",
+					"object": house,
+					"position": pos,
+					"team": house.team,
+					"entities_inside": house.entities_inside.duplicate()
+				})
+			elif object is Tank and not object.is_dead:
+				objects_to_destroy.append({
+					"type": "tank",
+					"object": object,
+					"position": pos,
+					"team": object.team
+				})
+				
+	# Add objects to the destruction queue
+	destruction_queue.append_array(objects_to_destroy)
+	
+	# Create remains at explosion positions
+	for pos in explosion_positions:
+		# Check if the position is valid and not already marked for remains
+		if pos.x >= 0 and pos.x < grid_size.x and pos.y >= 0 and pos.y < grid_size.y:
+			var pos_string = str(pos.x) + "," + str(pos.y)
+			if not pending_remains.has(pos_string):
+				pending_remains[pos_string] = {
+					"position": pos,
+					"team": bomb.team  # Use bomb's team for remains
+				}
+	
+	print("Bomb exploded at position: ", bomb.position_in_grid, " affecting ", objects_to_destroy.size(), " objects")
+
+# Process jets movement and bombing
+func process_jets() -> void:
+	for jet in jets:
+		# Check for targets in vision before moving
+		var target_pos = jet.check_vision_for_targets(occupied_positions, grid_size)
 		
+		# If a target was found, drop a bomb
+		if target_pos.x >= 0 and target_pos.y >= 0:
+			create_bomb(target_pos, jet.team)
+		
+		# Move the jet (returns false if jet exits grid)
+		if not jet.move():
+			continue  # Jet will be removed by signal handler
+		
+		# Update debug visualization if needed
+		if debug_mode:
+			var vision = jet.calculate_vision_pattern()
+			jet.vision_visualizer.show_vision_area(vision)
+	
+	# Remove jets that have exited the grid
+	for jet in jets_to_remove:
+		remove_jet(jet)
+	jets_to_remove.clear()
+
+# Process bombs countdown
+func process_bombs() -> void:
+	for bomb in bombs:
+		# Process turn returns true if bomb exploded
+		if bomb.process_turn():
+			continue  # Bomb will be removed by signal handler
+	
+	# Remove exploded bombs
+	for bomb in bombs_to_remove:
+		# Remove from bombs array
+		var index = bombs.find(bomb)
+		if index != -1:
+			bombs.remove_at(index)
+		
+		# Free the bomb node
+		bomb.queue_free()
+	bombs_to_remove.clear()
 
 func process_iteration() -> void:
 	# Update occupied positions for collision detection
@@ -342,6 +549,10 @@ func process_iteration() -> void:
 	
 	# First, process any pending remains aging
 	process_remains()
+	
+	# Process bombs and jets
+	process_bombs()
+	process_jets()
 	
 	# Check which entities are in sand biomes and update their movement flags
 	for entity in entities:
@@ -487,6 +698,11 @@ func process_iteration() -> void:
 		for tank in tanks:
 			if not tank.is_dead:
 				tank.update_possible_moves(grid_size, occupied_positions)
+				
+		# Update the debug visualization for jets
+		for jet in jets:
+			var vision = jet.calculate_vision_pattern()
+			jet.vision_visualizer.show_vision_area(vision)
 
 # Check for tank-to-tank combat
 func check_for_tank_combat() -> void:
