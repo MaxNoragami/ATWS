@@ -1,0 +1,187 @@
+[gd_scene load_steps=3 format=3 uid="uid://bjq3rra53qdbn"]
+
+[ext_resource type="FontFile" uid="uid://ewt0l4gmdk48" path="res://Fonts/scribble.ttf" id="1_oj2s1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oj2s1"]
+bg_color = Color(1, 1, 1, 0.529412)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+
+[node name="Info" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 250
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 250
+theme_override_constants/margin_bottom = 100
+
+[node name="Window" type="PanelContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_oj2s1")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Window"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/Window/MarginContainer"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Window/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.0
+theme_override_constants/separation = 0
+
+[node name="Subtitle" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[u][color=d30000]Basic  Input[/color][/u]"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]A[/color] - add  mode"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction2" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]S[/color] - switch  team"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction3" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]D[/color] - change  type"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction4" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]F[/color] - debug  mode"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction5" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]G[/color] - gender  swap"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction6" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]H[/color] - ufo  spawn"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction7" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]J[/color] - fighter jet"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Subtitle2" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[u][color=d30000]Sim Related[/color][/u]"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction8" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]Esc[/color] - close sim"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1

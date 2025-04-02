@@ -1,0 +1,8 @@
+[gd_resource type="Theme" load_steps=2 format=3 uid="uid://cb7ia7eblnoxb"]
+
+[ext_resource type="FontFile" uid="uid://g2bwrwxm387m" path="res://Fonts/crazy.ttf" id="1_wohkh"]
+
+[resource]
+Label/colors/font_color = Color(0.309804, 0.435294, 0.866667, 0.745098)
+Label/font_sizes/font_size = 24
+Label/fonts/font = ExtResource("1_wohkh")

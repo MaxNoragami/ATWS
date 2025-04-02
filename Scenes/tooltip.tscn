@@ -1,0 +1,43 @@
+[gd_scene load_steps=2 format=3 uid="uid://1bnjlq62vfiq"]
+
+[ext_resource type="Theme" uid="uid://cb7ia7eblnoxb" path="res://Themes/tooltip_text.tres" id="1_oj2s1"]
+
+[node name="Tooltip" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 400
+theme_override_constants/margin_right = 690
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="First" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+theme = ExtResource("1_oj2s1")
+text = "I - info"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Second" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+theme = ExtResource("1_oj2s1")
+text = "C - config"
+horizontal_alignment = 1
+vertical_alignment = 1
