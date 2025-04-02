@@ -16,6 +16,7 @@ const Bomb = preload("res://Scripts/bomb.gd")
 @export var bomb_scene: PackedScene
 @export var plague_scene: PackedScene
 
+
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
 var houses: Array[House] = []
@@ -32,12 +33,15 @@ var jets: Array[FighterJet] = []
 var bombs: Array[Bomb] = []
 var bombs_to_remove: Array[Bomb] = []
 var jets_to_remove: Array[FighterJet] = []
+var plague_manager: PlagueManager
+var plagues: Array[Plague] = []
 
 var teams = {
 	"Blue": Color(0.0, 0.0, 1.0),
 	"Green": Color("1c5c2d"),
 	"Red": Color(1.0, 0.0, 0.0),
-	"Purple": Color(0.5, 0.0, 0.5)
+	"Purple": Color(0.5, 0.0, 0.5),
+	"None": Color(0.5, 0.5, 0.5)
 }
 
 var team_scores = {
@@ -56,7 +60,7 @@ var current_gender = Entity.Gender.MALE
 # Placement mode variables
 var placement_mode = false
 var placement_preview: Node2D = null
-enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK, SAND_BIOME, WATER_BIOME }
+enum PlacementType { ENTITY, RIGID_BODY, HOUSE, TANK, SAND_BIOME, WATER_BIOME, BOMB }
 var current_placement_type = PlacementType.ENTITY
 
 # Debug mode
@@ -67,11 +71,15 @@ var reproduction_queue: Array = []  # Queue for entities to be born next turn
 var destruction_queue: Array = []   # Queue for objects to be destroyed
 
 func _ready() -> void:
+	# Initialize plague manager - add this near the beginning of your _ready() function
+	plague_manager = PlagueManager.new()
+	plague_manager.initialize(self, Vector2i(Game.CELLS_AMOUNT.x, Game.CELLS_AMOUNT.y))
+	add_child(plague_manager)	
 	# Create a preview entity for placement mode
 	create_placement_preview()
 	# Initialize the occupied positions dictionary
 	update_occupied_positions()
-
+	
 func create_placement_preview() -> void:
 	# Remove any existing preview
 	if placement_preview:
@@ -116,7 +124,17 @@ func create_placement_preview() -> void:
 		placement_preview = water_scene.instantiate() as WaterBiome
 		# Water biome doesn't need team color, but we'll create a generic preview
 		placement_preview.set_opacity(0.5)
-	
+	# Add this as a new else if case in your function
+	elif current_placement_type == PlacementType.BOMB:
+		placement_preview = bomb_scene.instantiate() as Bomb
+		placement_preview.initialize(Vector2i(0, 0))  # Temporary position
+		# Make sure the child exists before trying to access its modulate property
+		if placement_preview.get_child_count() > 0 and placement_preview.get_child(0) is Sprite2D:
+			placement_preview.get_child(0).modulate.a = 0.5  # 50% transparency for preview
+		# Alternative way to set opacity if the bomb has a set_opacity method
+		elif placement_preview.has_method("set_opacity"):
+			placement_preview.set_opacity(0.5)
+		
 	placement_preview.visible = false  # Hide initially until placement mode is activated
 	add_child(placement_preview)
 
@@ -205,7 +223,9 @@ func update_occupied_positions() -> void:
 		# Only mark as occupied if not already occupied
 		if not occupied_positions.has(pos_string):
 			occupied_positions[pos_string] = bomb
-
+	# Add plague cells to occupied positions - add this at the end of the function
+	for pos_string in plague_manager.plague_cells.keys():
+			occupied_positions[pos_string] = plague_manager.plague_cells[pos_string]
 # Check if there are any available adjacent cells around a position
 func has_available_adjacent_cell(pos: Vector2i) -> bool:
 	for x in range(-1, 2):
@@ -315,6 +335,9 @@ func _input(event) -> void:
 		elif current_placement_type == PlacementType.SAND_BIOME:
 			current_placement_type = PlacementType.WATER_BIOME
 			print("Placement type: Water Biome")
+		elif current_placement_type == PlacementType.WATER_BIOME:
+			current_placement_type = PlacementType.BOMB
+			print("Placement type: Bomb")
 		else:
 			current_placement_type = PlacementType.ENTITY
 			print("Placement type: Entity")
@@ -425,10 +448,9 @@ func remove_jet(jet: FighterJet) -> void:
 # Create a bomb at a specific position
 func create_bomb(pos: Vector2i, team_name: String) -> void:
 	var bomb = bomb_scene.instantiate() as Bomb
-	var color = teams[team_name]
 	
 	# Initialize the bomb
-	bomb.initialize(color, team_name, pos)
+	bomb.initialize(pos)
 	
 	# Connect explosion signal
 	bomb.connect("bomb_exploded", on_bomb_exploded)
@@ -498,8 +520,14 @@ func on_bomb_exploded(bomb: Bomb, explosion_positions: Array) -> void:
 					"position": pos,
 					"team": bomb.team  # Use bomb's team for remains
 				}
-	
-	print("Bomb exploded at position: ", bomb.position_in_grid, " affecting ", objects_to_destroy.size(), " objects")
+	# Add this at the end of your function, before the final print statement
+	# Spawn plague cells after explosion
+	plague_manager.spawn_initial_plague(explosion_positions, bomb.plague_spawn_count, plague_scene)
+	# Modify your print statement to include plague info
+	print("Bomb exploded at position: ", bomb.position_in_grid, " affecting ", objects_to_destroy.size(), " objects and spawning ", bomb.plague_spawn_count, " plague cells")
+
+func process_plagues() -> void:
+	plague_manager.process_plague_turn(plague_scene)
 
 # Process jets movement and bombing
 func process_jets() -> void:
@@ -549,6 +577,9 @@ func process_iteration() -> void:
 	
 	# First, process any pending remains aging
 	process_remains()
+	
+	# Process plague cells - add this after process_remains() but before process_bombs()
+	process_plagues()
 	
 	# Process bombs and jets
 	process_bombs()
@@ -784,7 +815,14 @@ func process_remains() -> void:
 # Create remains at a specific position
 func create_remains(pos: Vector2i, team_name: String) -> void:
 	var remain = remains_scene.instantiate() as Remains
-	var color = teams[team_name]
+	var color
+	
+	# Check if team_name exists in teams dictionary
+	if teams.has(team_name):
+		color = teams[team_name]
+	else:
+		# Default color for unknown teams (like "None")
+		color = Color(0.5, 0.5, 0.5)  # Grey as default
 	
 	# Initialize the remains
 	remain.initialize(color, team_name)
@@ -795,9 +833,6 @@ func create_remains(pos: Vector2i, team_name: String) -> void:
 	add_child(remain)
 	remains.append(remain)
 	
-	# Do not mark remains as occupied yet - they will be when update_occupied_positions is called
-	# This allows tanks to move through them
-
 # Process the destruction queue
 func process_destruction_queue() -> void:
 	for item in destruction_queue:
@@ -1193,7 +1228,24 @@ func place_at_preview() -> void:
 		
 		print("Water biome placed at position: ", grid_pos)
 		return
-	
+	# Add this after your water biome check but before the other entity checks
+	elif current_placement_type == PlacementType.BOMB:
+		# Check if the position is already occupied
+		if occupied_positions.has(pos_string):
+			print("Cannot place: position already occupied")
+			return
+		
+		# Create a new bomb at the preview position
+		var bomb = bomb_scene.instantiate() as Bomb
+		bomb.initialize(grid_pos)
+		# Connect explosion signal
+		bomb.connect("bomb_exploded", on_bomb_exploded)
+		add_child(bomb)
+		bombs.append(bomb)
+		# Mark this position as occupied immediately
+		occupied_positions[pos_string] = bomb
+		print("Bomb placed at position: ", grid_pos)
+		return
 	# For other objects, check if the position is already occupied
 	if occupied_positions.has(pos_string):
 		print("Cannot place: position already occupied")

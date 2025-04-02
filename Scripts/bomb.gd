@@ -3,13 +3,14 @@ extends Node2D
 class_name Bomb
 
 @export var sprite: Texture2D
-var entity_color: Color = Color(1.0, 0.0, 0.0)  # Red default color for bombs
+var entity_color: Color = Color(0.0, 0.0, 0.0)  # Black color for bombs
 var team: String = "None"
 var position_in_grid: Vector2i
 var countdown: int = 3  # Explodes after 3 iterations
-var atlas_x: int = 15  # Atlas coordinates for bomb texture - adjust for your sprite atlas
-var atlas_y: int = 21  # This might need adjustment depending on your sprite atlas
+var atlas_x: int = 45  # Atlas coordinates for bomb texture - updated to (45,9)
+var atlas_y: int = 9
 var explosion_radius: int = 1  # How many cells around the bomb will be affected
+var plague_spawn_count: int  # Random number of plague cells to spawn (0-7)
 
 signal bomb_exploded(bomb, positions)
 
@@ -26,11 +27,14 @@ func _ready() -> void:
 	sprite_node.modulate = entity_color
 	
 	add_child(sprite_node)
+	
+	# Determine random number of plague cells to spawn (0-7)
+	plague_spawn_count = randi() % 8  # 0 to 7
 
 # Initialize the bomb with custom parameters
-func initialize(color: Color, team_name: String, grid_pos: Vector2i) -> void:
-	entity_color = color
-	team = team_name
+func initialize(grid_pos: Vector2i) -> void:
+	entity_color = Color(0.0, 0.0, 0.0)  # Force black color
+	team = "None"  # Bombs don't belong to any team
 	position_in_grid = grid_pos
 	
 	# Set global position
