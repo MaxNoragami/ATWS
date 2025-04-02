@@ -28,7 +28,7 @@ var game_node
 signal jet_exited(jet)
 
 func _init(color: Color = Color(1.0, 1.0, 1.0), team_name: String = "None") -> void:
-	entity_color = color
+	entity_color = Color(0, 0, 0, 1) # Always black
 	team = team_name
 
 func _ready() -> void:
@@ -51,7 +51,7 @@ func _ready() -> void:
 		sprite_node.region_rect = Rect2(sprite_atlas["up"].x * 16, sprite_atlas["up"].y * 16, 16, 16)
 	
 	# Apply color tint
-	sprite_node.modulate = entity_color
+	sprite_node.modulate = Color(0, 0, 0, 1)
 	
 	add_child(sprite_node)
 	
@@ -74,7 +74,7 @@ func initialize(color: Color, team_name: String, start_pos: Vector2i, direction:
 	# Update sprite if it exists
 	if get_child_count() > 0 and get_child(0) is Sprite2D:
 		var sprite_node = get_child(0)
-		sprite_node.modulate = entity_color
+		sprite_node.modulate = Color(0, 0, 0, 1)
 		update_sprite_for_direction()
 
 # Calculate vision pattern based on current direction
