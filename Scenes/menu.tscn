@@ -1,0 +1,65 @@
+[gd_scene load_steps=3 format=3 uid="uid://cw1es5mi8jems"]
+
+[ext_resource type="Theme" uid="uid://dn2nxa6qhb1w0" path="res://Themes/menu_title_theme.tres" id="1_1rerr"]
+[ext_resource type="Theme" uid="uid://cg05bdufuvv8d" path="res://Themes/menu_button_theme.tres" id="2_xhh6f"]
+
+[node name="Menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 0
+size_flags_vertical = 2
+
+[node name="OutMarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 100
+theme_override_constants/margin_top = 50
+theme_override_constants/margin_right = 100
+theme_override_constants/margin_bottom = 50
+
+[node name="VBoxContent" type="VBoxContainer" parent="OutMarginContainer"]
+layout_mode = 2
+
+[node name="RichTextLabel" type="RichTextLabel" parent="OutMarginContainer/VBoxContent"]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("1_1rerr")
+bbcode_enabled = true
+text = "Another Typical [color=d30000]War[/color] Simulator"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MarginButtons" type="MarginContainer" parent="OutMarginContainer/VBoxContent"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 130
+theme_override_constants/margin_top = 5
+theme_override_constants/margin_right = 130
+
+[node name="VBoxButtons" type="VBoxContainer" parent="OutMarginContainer/VBoxContent/MarginButtons"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Play" type="Button" parent="OutMarginContainer/VBoxContent/MarginButtons/VBoxButtons"]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("2_xhh6f")
+text = "Play"
+
+[node name="Credits" type="Button" parent="OutMarginContainer/VBoxContent/MarginButtons/VBoxButtons"]
+layout_mode = 2
+size_flags_vertical = 3
+theme = ExtResource("2_xhh6f")
+text = "Credits
+"

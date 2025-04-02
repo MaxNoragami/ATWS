@@ -1,0 +1,27 @@
+[gd_resource type="Theme" load_steps=6 format=3 uid="uid://cg05bdufuvv8d"]
+
+[ext_resource type="FontFile" uid="uid://ewt0l4gmdk48" path="res://Fonts/scribble.ttf" id="1_fbxcj"]
+[ext_resource type="StyleBox" uid="uid://bo1r1ich5l3xx" path="res://Themes/menu_button_idle_style.tres" id="2_y1qx7"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ahbtu"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ierxx"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_fbxcj"]
+
+[resource]
+Button/colors/font_color = Color(0, 0, 0, 1)
+Button/colors/font_focus_color = Color(0, 0, 0, 1)
+Button/colors/font_hover_color = Color(0.164117, 0.164118, 0.164118, 1)
+Button/colors/font_hover_pressed_color = Color(0, 0, 0, 1)
+Button/colors/font_pressed_color = Color(0, 0, 0, 1)
+Button/constants/align_to_largest_stylebox = 0
+Button/constants/h_separation = 0
+Button/constants/line_spacing = 0
+Button/font_sizes/font_size = 69
+Button/fonts/font = ExtResource("1_fbxcj")
+Button/styles/disabled = SubResource("StyleBoxEmpty_ahbtu")
+Button/styles/focus = SubResource("StyleBoxEmpty_ierxx")
+Button/styles/hover = ExtResource("2_y1qx7")
+Button/styles/normal = ExtResource("2_y1qx7")
+Button/styles/pressed = SubResource("StyleBoxEmpty_fbxcj")
