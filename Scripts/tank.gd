@@ -455,6 +455,10 @@ func detect_targets_in_vision(occupied_positions: Dictionary, grid_size: Vector2
 		if occupied_positions.has(pos_string):
 			var object = occupied_positions[pos_string]
 			
+			# Skip if object doesn't have a team property or is a plague
+			if object is Plague or not object.get("team"):
+				continue
+				
 			# If it's an entity or tank from another team, add to targets
 			# Skip entities that are not visible (in houses)
 			if not(object is WaterBiome) and object.team != team:
