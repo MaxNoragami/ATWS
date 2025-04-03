@@ -1,6 +1,5 @@
 extends Node2D
 
-
 const FighterJet = preload("res://Scripts/jet.gd")
 const Bomb = preload("res://Scripts/bomb.gd")
 
@@ -70,6 +69,9 @@ var tanks_to_remove: Array[Tank] = []
 var reproduction_queue: Array = []  # Queue for entities to be born next turn
 var destruction_queue: Array = []   # Queue for objects to be destroyed
 
+# UI state variables
+var game_active = false
+
 func _ready() -> void:
 	# Initialize plague manager - add this near the beginning of your _ready() function
 	plague_manager = PlagueManager.new()
@@ -79,6 +81,131 @@ func _ready() -> void:
 	create_placement_preview()
 	# Initialize the occupied positions dictionary
 	update_occupied_positions()
+	
+	# Connect UI signals
+	var menu = $CanvasLayer/Menu
+	var tooltip = $CanvasLayer/Tooltip
+	var info = $CanvasLayer/Info
+	
+	menu.connect("play_pressed", start_game)
+	
+	# Start with menu visible
+	menu.visible = true
+	tooltip.visible = false
+	info.visible = false
+	game_active = false
+
+func start_game():
+	game_active = true
+	$CanvasLayer/Menu.visible = false
+	$CanvasLayer/Tooltip.visible = true
+	$CanvasLayer/Info.visible = false
+
+func reset_game():
+	# Clear all entities
+	print("DEBUG: Clearing " + str(entities.size()) + " entities")
+	for entity in entities:
+		if is_instance_valid(entity) and !entity.is_queued_for_deletion():
+			entity.visible = false  # Immediately hide it
+			entity.queue_free()
+	entities.clear()
+	entities_to_remove.clear()
+	
+	# Clear all rigid bodies
+	for rigid_body in rigid_bodies:
+		if is_instance_valid(rigid_body) and !rigid_body.is_queued_for_deletion():
+			rigid_body.visible = false
+			rigid_body.queue_free()
+	rigid_bodies.clear()
+	
+	# Clear all houses
+	for house in houses:
+		if is_instance_valid(house) and !house.is_queued_for_deletion():
+			house.visible = false
+			house.queue_free()
+	houses.clear()
+	
+	# Clear all tanks
+	print("DEBUG: Clearing " + str(tanks.size()) + " tanks")
+	for tank in tanks:
+		if is_instance_valid(tank) and !tank.is_queued_for_deletion():
+			tank.visible = false
+			tank.queue_free()
+	tanks.clear()
+	tanks_to_remove.clear()
+	
+	# Clear all remains
+	for remain in remains:
+		if is_instance_valid(remain) and !remain.is_queued_for_deletion():
+			remain.visible = false
+			remain.queue_free()
+	remains.clear()
+	
+	# Clear all UFOs
+	for ufo in ufos:
+		if is_instance_valid(ufo) and !ufo.is_queued_for_deletion():
+			ufo.visible = false
+			ufo.queue_free()
+	ufos.clear()
+	ufos_to_remove.clear()
+   
+	# Clear all jets
+	print("DEBUG: Clearing " + str(jets.size()) + " jets")
+	for jet in jets:
+		if is_instance_valid(jet) and !jet.is_queued_for_deletion():
+			jet.visible = false
+			jet.queue_free()
+	jets.clear()
+	jets_to_remove.clear()
+	
+	# Clear all bombs
+	for bomb in bombs:
+		if is_instance_valid(bomb) and !bomb.is_queued_for_deletion():
+			bomb.visible = false
+			bomb.queue_free()
+	bombs.clear()
+	bombs_to_remove.clear()
+	
+	# Clear all biomes
+	for pos_string in biomes.keys():
+		if biomes[pos_string] != null and is_instance_valid(biomes[pos_string]) and !biomes[pos_string].is_queued_for_deletion():
+			biomes[pos_string].visible = false
+			biomes[pos_string].queue_free()
+	biomes.clear()
+	
+	# Clear plague cells
+	plague_manager.clear_all_plague_cells()
+	
+	entities.resize(0)
+	tanks.resize(0)
+	jets.resize(0)
+	bombs.resize(0)
+	houses.resize(0)
+	rigid_bodies.resize(0)
+	remains.resize(0)
+	ufos.resize(0)
+	entities_to_remove.resize(0)
+	tanks_to_remove.resize(0)
+	bombs_to_remove.resize(0)
+	jets_to_remove.resize(0)
+	ufos_to_remove.resize(0)
+
+	# Reset UI state
+	game_active = false
+	$CanvasLayer/Menu.visible = true
+	$CanvasLayer/Tooltip.visible = false
+	$CanvasLayer/Info.visible = false
+	
+	# Reset occupied positions
+	occupied_positions.clear()
+	pending_remains.clear()
+	
+	# Reset placement mode
+	placement_mode = false
+	if placement_preview:
+		placement_preview.visible = false
+	
+	await get_tree().process_frame
 	
 func create_placement_preview() -> void:
 	# Remove any existing preview
@@ -262,6 +389,10 @@ func is_position_available(pos: Vector2i) -> bool:
 	return true
 
 func update_placement_preview() -> void:
+	# Don't update preview if game is not active
+	if not game_active:
+		return
+
 	# Get mouse position and convert to grid position
 	var mouse_pos = get_global_mouse_position()
 	var grid_pos = Vector2i(floor(mouse_pos.x / Game.CELL_SIZE.x), floor(mouse_pos.y / Game.CELL_SIZE.y))
@@ -291,6 +422,25 @@ func update_placement_preview() -> void:
 		house_preview.update_entrance_positions()
 
 func _input(event) -> void:
+	# First check for escape key to exit the game
+	if event.is_action_pressed("exit") or (event is InputEventKey and event.keycode == KEY_ESCAPE and event.pressed and not event.echo):
+		if $CanvasLayer/Info.visible:
+			# If info is visible, just hide it
+			$CanvasLayer/Info.visible = false
+		elif game_active:
+			# If game is active, reset everything and go back to menu
+			reset_game()
+		return
+	
+	# Handle info panel toggling (only when game is active)
+	if game_active and (event.is_action_pressed("info") or (event is InputEventKey and event.keycode == KEY_I and event.pressed and not event.echo)):
+		$CanvasLayer/Info.visible = !$CanvasLayer/Info.visible
+		return
+
+	# Only process game inputs if game is active
+	if not game_active:
+		return
+
 	if event.is_action_pressed("next_iteration"):
 		process_iteration()
 	
@@ -1176,6 +1326,10 @@ func remove_entity(entity) -> void:
 	print("Entity died at age: ", entity.age)
 
 func place_at_preview() -> void:
+	# Don't place if game is not active
+	if not game_active:
+		return
+
 	var grid_pos = placement_preview.position_in_grid
 	var pos_string = str(grid_pos.x) + "," + str(grid_pos.y)
 	
