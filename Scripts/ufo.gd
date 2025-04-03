@@ -4,13 +4,16 @@ class_name UFO
 
 signal ufo_disappeared(ufo)
 
+@export var MAX_PRESENCE = 3
+@export var MAX_HUMANS_AMOUNT = 5
+
 @export var sprite: Texture2D
 var ufo_color: Color = Color(1.0, 1.0, 1.0)  # Default white color
 var team: String = "None"
 
 var position_in_grid: Vector2i
-var remaining_rounds: int = 3
-var max_people_spawned: int = 5
+var remaining_rounds: int = MAX_PRESENCE
+var max_people_spawned: int = MAX_HUMANS_AMOUNT
 var people_spawned_this_round: int = 0
 
 var game_node  # Reference to the game node to access occupied positions
@@ -20,6 +23,9 @@ func _init(color: Color = Color(1.0, 1.0, 1.0), team_name: String = "None") -> v
 	team = team_name
 
 func _ready() -> void:
+	remaining_rounds = MAX_PRESENCE
+	max_people_spawned = MAX_HUMANS_AMOUNT
+
 	z_index = 7
 	# Create sprite
 	var sprite_node = Sprite2D.new()

@@ -2,19 +2,28 @@ extends Node2D
 
 class_name Bomb
 
+@export var COUNTDOWN : int = 3
+@export var EXPLOSION_RADIUS : int = 1
+@export var PLAGUE_CELLS : int = 7
+
 @export var sprite: Texture2D
 var entity_color: Color = Color(0.0, 0.0, 0.0)  # Black color for bombs
 var team: String = "None"
 var position_in_grid: Vector2i
-var countdown: int = 3  # Explodes after 3 iterations
+var countdown: int = COUNTDOWN  # Explodes after 3 iterations
 var atlas_x: int = 45  # Atlas coordinates for bomb texture - updated to (45,9)
 var atlas_y: int = 9
-var explosion_radius: int = 1  # How many cells around the bomb will be affected
+var explosion_radius: int = EXPLOSION_RADIUS  # How many cells around the bomb will be affected
 var plague_spawn_count: int  # Random number of plague cells to spawn (0-7)
+var plague_cells : int = PLAGUE_CELLS
 
 signal bomb_exploded(bomb, positions)
 
 func _ready() -> void:
+	countdown = COUNTDOWN
+	explosion_radius = EXPLOSION_RADIUS
+	plague_cells = PLAGUE_CELLS
+
 	z_index = 7  # Above most objects but below jets
 	
 	# Create sprite
@@ -29,7 +38,7 @@ func _ready() -> void:
 	add_child(sprite_node)
 	
 	# Determine random number of plague cells to spawn (0-7)
-	plague_spawn_count = randi() % 8  # 0 to 7
+	plague_spawn_count = randi() % (plague_cells + 1)  # 0 to 7
 
 # Initialize the bomb with custom parameters
 func initialize(grid_pos: Vector2i) -> void:
@@ -69,7 +78,6 @@ func process_turn() -> bool:
 		# Bomb explodes
 		explode()
 		return true
-		
 	return false
 
 # Calculate explosion area

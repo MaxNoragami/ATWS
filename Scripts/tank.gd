@@ -2,6 +2,8 @@ extends Node2D
 
 class_name Tank
 
+@export var HUNTING_COOLDOWN : int = 0
+
 @export var sprite: Texture2D
 var entity_color: Color = Color(1.0, 1.0, 1.0)  # Default color (white)
 var team: String = "None"
@@ -24,7 +26,7 @@ var is_dead: bool = false
 var detected_targets: Array = []  # Will hold detected entities and tanks
 var current_target = null  # Current target to hunt
 var target_last_seen_position = null  # Last known position of target
-var hunting_cooldown: int = 0  # Cooldown for hunting behavior
+var hunting_cooldown: int = HUNTING_COOLDOWN  # Cooldown for hunting behavior
 
 # Signal for when this tank is destroyed
 signal tank_destroyed(tank)
@@ -34,6 +36,8 @@ func _init(color: Color = Color(1.0, 1.0, 1.0), team_name: String = "None") -> v
 	team = team_name
 
 func _ready() -> void:
+	hunting_cooldown = HUNTING_COOLDOWN
+
 	z_index = 6
 	# Create sprite
 	var sprite_node = Sprite2D.new()

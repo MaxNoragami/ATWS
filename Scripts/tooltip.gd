@@ -3,8 +3,6 @@ extends Control
 func _ready():
     visible = false
 
-
-
 func show_tooltip():
     visible = true
 

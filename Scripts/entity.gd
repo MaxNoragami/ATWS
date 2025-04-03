@@ -3,6 +3,12 @@ extends Node2D
 # Entity script
 class_name Entity
 
+# Config Vars
+@export var LIFESPAN : int = 100
+@export var BIRTH_AGE : int = 0
+@export var FERTILITY : float = 0.5
+@export var FERTILITY_DECREASE : float = 0.17
+
 var is_in_sand: bool = false
 var can_move_in_sand: bool = true  # Alternates between true/false when in sand
 var is_in_water: bool = false
@@ -28,8 +34,8 @@ enum Gender { MALE, FEMALE }
 var gender: Gender = Gender.MALE
 
 # Age properties
-var age: int = 0
-var lifespan: int = 100
+var age: int = BIRTH_AGE
+var lifespan: int = LIFESPAN
 var age_periods = {
 	"child": 0.2,    # 0-19 years (20% of lifespan)
 	"adult": 0.6,    # 20-79 years (60% of lifespan)
@@ -37,8 +43,8 @@ var age_periods = {
 }
 
 # Reproduction properties
-var reproduction_chance: float = 0.5  # Initial reproduction chance
-var reproduction_decrease: float = 0.17  # Decrease after reproduction
+var reproduction_chance: float = FERTILITY  # Initial reproduction chance
+var reproduction_decrease: float = FERTILITY_DECREASE  # Decrease after reproduction
 var had_reproduction_this_turn: bool = false  # Flag to track reproduction in current turn
 
 # Atlas coordinates for different sprites
@@ -65,6 +71,11 @@ func _init(color: Color = Color(1.0, 0.5, 0.5), team_name: String = "None") -> v
 	team = team_name
 
 func _ready() -> void:
+	lifespan = LIFESPAN
+	age = BIRTH_AGE
+	reproduction_chance = FERTILITY
+	reproduction_decrease = FERTILITY_DECREASE
+
 	# Create sprite
 	z_index = 5
 	var sprite_node = Sprite2D.new()
