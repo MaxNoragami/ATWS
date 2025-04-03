@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://cw1es5mi8jems"]
+[gd_scene load_steps=4 format=3 uid="uid://dcbkwc4oyqos5"]
 
 [ext_resource type="Theme" uid="uid://dn2nxa6qhb1w0" path="res://Themes/menu_title_theme.tres" id="1_1rerr"]
+[ext_resource type="Script" uid="uid://c82n7r2sv1cd6" path="res://Scripts/menu.gd" id="1_cayip"]
 [ext_resource type="Theme" uid="uid://cg05bdufuvv8d" path="res://Themes/menu_button_theme.tres" id="2_xhh6f"]
 
 [node name="Menu" type="Control"]
@@ -12,6 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 0
 size_flags_vertical = 2
+script = ExtResource("1_cayip")
 
 [node name="OutMarginContainer" type="MarginContainer" parent="."]
 layout_mode = 1

@@ -12,6 +12,19 @@ func initialize(game_reference, grid_dimensions: Vector2i) -> void:
 	game_node = game_reference
 	grid_size = grid_dimensions
 
+# Add this at the end of your plague_manager.gd file
+func clear_all_plague_cells() -> void:
+	# Remove all plague cells from the scene
+	for pos_string in plague_cells.keys():
+		if plague_cells[pos_string] != null:
+			plague_cells[pos_string].queue_free()
+	
+	# Clear the plague cells dictionary
+	plague_cells.clear()
+	
+	# Clear the removal queue
+	plague_to_remove.clear()
+
 # Add a new plague cell at the specified position
 func add_plague_cell(pos: Vector2i, plague_scene: PackedScene) -> void:
 	var pos_string = str(pos.x) + "," + str(pos.y)
