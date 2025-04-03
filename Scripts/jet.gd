@@ -2,12 +2,15 @@ extends Node2D
 
 class_name FighterJet
 
+@export var SPEED : int = 2
+
 @export var sprite: Texture2D
 var entity_color: Color = Color(1.0, 1.0, 1.0)  # Default color (white)
 var team: String = "None"
 var position_in_grid: Vector2i
 var movement_direction: Vector2i  # Direction of movement (e.g., Vector2i(1, 0) for right)
 var vision_visualizer: JetVisionVisualizer
+var speed : int = SPEED
 
 # Atlas coordinates for different directions
 var sprite_atlas = {
@@ -32,6 +35,8 @@ func _init(color: Color = Color(1.0, 1.0, 1.0), team_name: String = "None") -> v
 	team = team_name
 
 func _ready() -> void:
+	speed = SPEED
+
 	z_index = 8  # Above tanks, UFOs, etc.
 	
 	# Create sprite
@@ -112,7 +117,7 @@ func calculate_vision_pattern() -> Array[Vector2i]:
 # Move the jet across the grid
 func move() -> bool:
 	# Always skip one grid cell (move 2 cells at once)
-	var new_position = position_in_grid + (movement_direction * 2)
+	var new_position = position_in_grid + (movement_direction * speed)
 	
 	# Check if new position is out of grid bounds
 	if new_position.x < 0 or new_position.x >= Game.CELLS_AMOUNT.x or \

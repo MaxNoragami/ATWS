@@ -1,0 +1,704 @@
+[gd_scene load_steps=22 format=3 uid="uid://cf38neiho7xlx"]
+
+[ext_resource type="FontFile" uid="uid://g2bwrwxm387m" path="res://Fonts/crazy.ttf" id="1_gyli8"]
+[ext_resource type="StyleBox" uid="uid://dyhsyl5vvka65" path="res://Themes/tab_selected_focus_style.tres" id="2_6u63q"]
+[ext_resource type="StyleBox" uid="uid://c3pppgnj8fgsv" path="res://Themes/tab_hover_style.tres" id="2_lrmn4"]
+[ext_resource type="FontFile" uid="uid://ewt0l4gmdk48" path="res://Fonts/scribble.ttf" id="4_lrmn4"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_100nm"]
+bg_color = Color(1, 1, 1, 0.529412)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_100nm"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tkr1x"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lrmn4"]
+content_margin_left = 5.0
+content_margin_top = 10.0
+content_margin_right = 5.0
+bg_color = Color(1, 1, 1, 0.529412)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_color = Color(0.656963, 0.742211, 0.967452, 0.52549)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+
+[sub_resource type="Theme" id="Theme_kr0as"]
+TabContainer/colors/font_hovered_color = Color(0.231638, 0.3427, 0.765624, 1)
+TabContainer/colors/font_selected_color = Color(0.309804, 0.435294, 0.866667, 1)
+TabContainer/colors/font_unselected_color = Color(0.444752, 0.568062, 0.935446, 1)
+TabContainer/fonts/font = ExtResource("1_gyli8")
+TabContainer/styles/panel = SubResource("StyleBoxFlat_100nm")
+TabContainer/styles/tab_disabled = SubResource("StyleBoxEmpty_100nm")
+TabContainer/styles/tab_focus = SubResource("StyleBoxEmpty_tkr1x")
+TabContainer/styles/tab_hovered = ExtResource("2_lrmn4")
+TabContainer/styles/tab_selected = ExtResource("2_6u63q")
+TabContainer/styles/tab_unselected = SubResource("StyleBoxFlat_lrmn4")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tkr1x"]
+content_margin_right = 5.0
+bg_color = Color(0.6, 0.6, 0.6, 0)
+
+[sub_resource type="Theme" id="Theme_lrmn4"]
+Label/colors/font_color = Color(0.309804, 0.435294, 0.866667, 1)
+Label/font_sizes/font_size = 24
+Label/fonts/font = ExtResource("1_gyli8")
+Label/styles/normal = SubResource("StyleBoxFlat_tkr1x")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p4uu7"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a7ocr"]
+content_margin_left = 5.0
+content_margin_right = 5.0
+bg_color = Color(1, 1, 1, 0.298039)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_g5g34"]
+
+[sub_resource type="Theme" id="Theme_bup8a"]
+LineEdit/colors/font_color = Color(0.827451, 0, 0, 1)
+LineEdit/colors/font_placeholder_color = Color(0.827451, 0, 0, 0.6)
+LineEdit/colors/font_selected_color = Color(1, 0.534706, 0.46978, 1)
+LineEdit/colors/selection_color = Color(0.309804, 0.435294, 0.866667, 1)
+LineEdit/font_sizes/font_size = 24
+LineEdit/fonts/font = ExtResource("4_lrmn4")
+LineEdit/styles/focus = SubResource("StyleBoxFlat_p4uu7")
+LineEdit/styles/normal = SubResource("StyleBoxFlat_a7ocr")
+LineEdit/styles/read_only = SubResource("StyleBoxEmpty_g5g34")
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_lrmn4"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_p4uu7"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g5g34"]
+bg_color = Color(1, 1, 1, 0.168627)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bup8a"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1jr8q"]
+bg_color = Color(1, 1, 1, 0.168627)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.309804, 0.435294, 0.866667, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="Theme" id="Theme_0p7ku"]
+Button/colors/font_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+Button/colors/font_focus_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+Button/colors/font_hover_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+Button/colors/font_hover_pressed_color = Color(0.309804, 0.435294, 0.866667, 1)
+Button/colors/font_pressed_color = Color(0.309804, 0.435294, 0.866667, 1)
+Button/colors/icon_focus_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+Button/font_sizes/font_size = 30
+Button/styles/disabled = SubResource("StyleBoxEmpty_lrmn4")
+Button/styles/focus = SubResource("StyleBoxEmpty_p4uu7")
+Button/styles/hover = SubResource("StyleBoxFlat_g5g34")
+Button/styles/normal = SubResource("StyleBoxFlat_bup8a")
+Button/styles/pressed = SubResource("StyleBoxFlat_1jr8q")
+
+[node name="Config" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainerOut" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 200
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 200
+theme_override_constants/margin_bottom = 100
+
+[node name="TabContainer" type="TabContainer" parent="MarginContainerOut"]
+layout_mode = 2
+theme = SubResource("Theme_kr0as")
+tab_alignment = 1
+current_tab = 0
+
+[node name="Human" type="TabBar" parent="MarginContainerOut/TabContainer"]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerOut/TabContainer/Human"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainerOut/TabContainer/Human/MarginContainer"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Lifespan" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/Lifespan"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Lifespan:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/Lifespan"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "100"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/Lifespan"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="BirthAge" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/BirthAge"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Birth Age:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/BirthAge"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "0"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/BirthAge"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="Fertility" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/Fertility"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Fertility:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/Fertility"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "0.5"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/Fertility"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="FertilityDecrease" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/FertilityDecrease"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Fertility Decrease:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/FertilityDecrease"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "0.17"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Human/MarginContainer/ScrollContainer/VBoxContainer/FertilityDecrease"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="Tank" type="TabBar" parent="MarginContainerOut/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerOut/TabContainer/Tank"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainerOut/TabContainer/Tank/MarginContainer"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainerOut/TabContainer/Tank/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HuntingCooldown" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Tank/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Tank/MarginContainer/ScrollContainer/VBoxContainer/HuntingCooldown"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Hunting Cooldown:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Tank/MarginContainer/ScrollContainer/VBoxContainer/HuntingCooldown"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "0"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Tank/MarginContainer/ScrollContainer/VBoxContainer/HuntingCooldown"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="House" type="TabBar" parent="MarginContainerOut/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerOut/TabContainer/House"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainerOut/TabContainer/House/MarginContainer"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainerOut/TabContainer/House/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Capacity" type="HBoxContainer" parent="MarginContainerOut/TabContainer/House/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/House/MarginContainer/ScrollContainer/VBoxContainer/Capacity"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Capacity:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/House/MarginContainer/ScrollContainer/VBoxContainer/Capacity"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "4"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/House/MarginContainer/ScrollContainer/VBoxContainer/Capacity"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="UFO" type="TabBar" parent="MarginContainerOut/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerOut/TabContainer/UFO"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainerOut/TabContainer/UFO/MarginContainer"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MaxHuman" type="HBoxContainer" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer/MaxHuman"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Max Humans Amount:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer/MaxHuman"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "5"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer/MaxHuman"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="MaxPresence" type="HBoxContainer" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer/MaxPresence"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Max Presence:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer/MaxPresence"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "3"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/UFO/MarginContainer/ScrollContainer/VBoxContainer/MaxPresence"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="Bomb" type="TabBar" parent="MarginContainerOut/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 4
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerOut/TabContainer/Bomb"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Countdown" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/Countdown"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Countdown:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/Countdown"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "3"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/Countdown"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="ExplosionRadius" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/ExplosionRadius"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Explosion Radius:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/ExplosionRadius"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "1"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/ExplosionRadius"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="PlagueSpawnCells" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/PlagueSpawnCells"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Plague Spawn Cells:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/PlagueSpawnCells"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "7"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Bomb/MarginContainer/ScrollContainer/VBoxContainer/PlagueSpawnCells"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"
+
+[node name="Jet" type="TabBar" parent="MarginContainerOut/TabContainer"]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainerOut/TabContainer/Jet"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainerOut/TabContainer/Jet/MarginContainer"]
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainerOut/TabContainer/Jet/MarginContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Speed" type="HBoxContainer" parent="MarginContainerOut/TabContainer/Jet/MarginContainer/ScrollContainer/VBoxContainer"]
+custom_minimum_size = Vector2(90, 50)
+layout_mode = 2
+size_flags_vertical = 2
+
+[node name="ValueLabel" type="Label" parent="MarginContainerOut/TabContainer/Jet/MarginContainer/ScrollContainer/VBoxContainer/Speed"]
+custom_minimum_size = Vector2(20, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+size_flags_stretch_ratio = 4.03
+theme = SubResource("Theme_lrmn4")
+text = "Speed:"
+horizontal_alignment = 2
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ValueLineEdit" type="LineEdit" parent="MarginContainerOut/TabContainer/Jet/MarginContainer/ScrollContainer/VBoxContainer/Speed"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.13
+theme = SubResource("Theme_bup8a")
+text = "2"
+placeholder_text = "Value"
+alignment = 1
+
+[node name="UndoButton" type="Button" parent="MarginContainerOut/TabContainer/Jet/MarginContainer/ScrollContainer/VBoxContainer/Speed"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = SubResource("Theme_0p7ku")
+text = "↩"

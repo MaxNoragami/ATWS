@@ -2,6 +2,8 @@ extends Node2D
 
 class_name House
 
+@export var MAX_CAPACITY : int = 4
+
 @export var sprite: Texture2D
 var atlas_x: int = 0  # House texture coordinates in atlas
 var atlas_y: int = 20
@@ -10,11 +12,13 @@ var team: String = "None"
 var position_in_grid: Vector2i
 
 # House properties
-var max_capacity: int = 4
+var max_capacity: int = MAX_CAPACITY
 var entities_inside: Array[Entity] = []
 var entrance_positions: Array[Vector2i] = []
 
 func _ready() -> void:
+	max_capacity = MAX_CAPACITY
+
 	z_index = 5
 	# Create sprite if it doesn't exist
 	if get_child_count() == 0 or not get_child(0) is Sprite2D:

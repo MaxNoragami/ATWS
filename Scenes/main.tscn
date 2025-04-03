@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://brq5xgdn42alb"]
+[gd_scene load_steps=21 format=3 uid="uid://brq5xgdn42alb"]
 
 [ext_resource type="Script" path="res://Scripts/game_loop.gd" id="1_8gbba"]
 [ext_resource type="PackedScene" uid="uid://b60i628gttn5u" path="res://Scenes/grid.tscn" id="2_bo1nx"]
@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://dcbkwc4oyqos5" path="res://Scenes/menu.tscn" id="15_h1bgf"]
 [ext_resource type="PackedScene" uid="uid://b5ebwd6kgxe11" path="res://Scenes/tooltip.tscn" id="16_b3802"]
 [ext_resource type="PackedScene" uid="uid://nml10hr833si" path="res://Scenes/info.tscn" id="17_fevyy"]
+[ext_resource type="PackedScene" uid="uid://cf38neiho7xlx" path="res://Scenes/config.tscn" id="18_b3802"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kry3j"]
 texture = ExtResource("4_jjvhh")
@@ -1128,3 +1129,5 @@ tile_set = SubResource("TileSet_21xkr")
 [node name="Tooltip" parent="CanvasLayer" instance=ExtResource("16_b3802")]
 
 [node name="Info" parent="CanvasLayer" instance=ExtResource("17_fevyy")]
+
+[node name="Config" parent="CanvasLayer" instance=ExtResource("18_b3802")]
