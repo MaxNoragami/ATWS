@@ -15,7 +15,7 @@ var atlas_coords = [
 var atlas_x: int  # Current atlas coordinates for plague texture
 var atlas_y: int
 var plague_color: Color = Color(0.4, 0.3, 0.2, 1.0)  # Dark brown
-# In plague.gd, add a team property
+
 var team: String = "Plague"  # Plague is its own "team"
 
 # Signal for when the plague has reached its lifetime

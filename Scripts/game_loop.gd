@@ -87,7 +87,7 @@ func _ready() -> void:
 	evolution_timer.connect("timeout", _on_evolution_timer_timeout)
 	add_child(evolution_timer)
 
-	# Initialize plague manager - add this near the beginning of your _ready() function
+	
 	plague_manager = PlagueManager.new()
 	plague_manager.initialize(self, Vector2i(Game.CELLS_AMOUNT.x, Game.CELLS_AMOUNT.y))
 	add_child(plague_manager)	
@@ -254,7 +254,7 @@ func create_placement_preview() -> void:
 	
 	if current_placement_type == PlacementType.ENTITY:
 		placement_preview = entity_scene.instantiate() as Entity
-		# For entity, we need to adapt to your entity's initialization method
+		
 		if placement_preview.has_method("initialize"):
 			placement_preview.initialize(preview_color, team_name)
 		else:
@@ -287,7 +287,7 @@ func create_placement_preview() -> void:
 		placement_preview = water_scene.instantiate() as WaterBiome
 		# Water biome doesn't need team color, but we'll create a generic preview
 		placement_preview.set_opacity(0.5)
-	# Add this as a new else if case in your function
+	
 	elif current_placement_type == PlacementType.BOMB:
 		placement_preview = bomb_scene.instantiate() as Bomb
 		placement_preview.initialize(Vector2i(0, 0))  # Temporary position
@@ -730,10 +730,10 @@ func on_bomb_exploded(bomb: Bomb, explosion_positions: Array) -> void:
 					"position": pos,
 					"team": bomb.team  # Use bomb's team for remains
 				}
-	# Add this at the end of your function, before the final print statement
+	
 	# Spawn plague cells after explosion
 	plague_manager.spawn_initial_plague(explosion_positions, bomb.plague_spawn_count, plague_scene)
-	# Modify your print statement to include plague info
+	# print statement to include plague info
 	print("Bomb exploded at position: ", bomb.position_in_grid, " affecting ", objects_to_destroy.size(), " objects and spawning ", bomb.plague_spawn_count, " plague cells")
 
 func process_plagues() -> void:
@@ -1324,7 +1324,7 @@ func process_reproduction_queue() -> void:
 		if child.has_method("initialize"):
 			child.initialize(color, repro_data["team"])
 		else:
-			# Use whatever approach your entities are using
+			
 			child.entity_color = color
 			child.team = repro_data["team"]
 			
@@ -1445,7 +1445,7 @@ func place_at_preview() -> void:
 		
 		print("Water biome placed at position: ", grid_pos)
 		return
-	# Add this after your water biome check but before the other entity checks
+	
 	elif current_placement_type == PlacementType.BOMB:
 		# Check if the position is already occupied
 		if occupied_positions.has(pos_string):
@@ -1482,7 +1482,7 @@ func place_at_preview() -> void:
 		if entity.has_method("initialize"):
 			entity.initialize(color, team_name)
 		else:
-			# Use whatever approach your entities are using
+			
 			entity.entity_color = color
 			entity.team = team_name
 			

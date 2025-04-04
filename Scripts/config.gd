@@ -191,7 +191,7 @@ func _ready():
 	speed_undo.connect("pressed", _on_speed_undo_pressed)
 	speed_input.connect("text_changed", _on_speed_text_changed)
 
-	# Skip CooldownDuration if it doesn't exist in your scene
+	# Skip CooldownDuration if it doesn't exist in the scene
 	if jet_tab.has_node("MarginContainer/ScrollContainer/VBoxContainer/CooldownDuration"):
 		var cooldown_duration_container = jet_tab.get_node("MarginContainer/ScrollContainer/VBoxContainer/CooldownDuration")
 		var cooldown_duration_input = cooldown_duration_container.get_node("ValueLineEdit")

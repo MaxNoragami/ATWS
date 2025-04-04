@@ -124,13 +124,12 @@ func _process(delta: float) -> void:
 			var original_color = entity_color
 			sprite_node.modulate = Color(original_color.r, original_color.g, original_color.b, 1.0)
 
-# Update possible moves and debug visualization
-# Modify this function to show both movement and vision debug
+
+# Function to show both movement and vision debug
 func update_possible_moves(grid_size: Vector2i, occupied_positions: Dictionary) -> void:
 	var moves = movement.calculate_possible_moves(grid_size, occupied_positions)
 	debug_visualizer.show_possible_moves(moves)
 	
-	# Update vision visualization as well
 	var vision = calculate_vision_area()
 	vision_visualizer.show_vision_area(vision)
 

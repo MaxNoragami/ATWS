@@ -44,7 +44,7 @@ func show_vision_and_kill_area(vision: Array[Vector2i], kill: Array[Vector2i], g
 		var square = Node2D.new()
 		square.z_index = -1  # Make sure squares appear below entities
 		
-		# Add the square to our debug visualizer
+		# Add the square to debug visualizer
 		add_child(square)
 		debug_squares.append(square)
 		
@@ -61,7 +61,7 @@ func show_vision_and_kill_area(vision: Array[Vector2i], kill: Array[Vector2i], g
 		var square = Node2D.new()
 		square.z_index = -1  # Make sure squares appear below entities
 		
-		# Add the square to our kill visualizer
+		# Add the square to kill visualizer
 		add_child(square)
 		kill_squares.append(square)
 		
