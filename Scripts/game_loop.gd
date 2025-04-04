@@ -71,6 +71,7 @@ var destruction_queue: Array = []   # Queue for objects to be destroyed
 
 # UI state variables
 var game_active = false
+var config_window_visible = false
 
 func _ready() -> void:
 	# Initialize plague manager - add this near the beginning of your _ready() function
@@ -424,7 +425,12 @@ func update_placement_preview() -> void:
 func _input(event) -> void:
 	# First check for escape key to exit the game
 	if event.is_action_pressed("exit") or (event is InputEventKey and event.keycode == KEY_ESCAPE and event.pressed and not event.echo):
-		if $CanvasLayer/Info.visible:
+		if $CanvasLayer/Config.visible:
+			# If config is visible, apply settings and hide it
+			$CanvasLayer/Config.apply_configuration()
+			$CanvasLayer/Config.visible = false
+			config_window_visible = false
+		elif $CanvasLayer/Info.visible:
 			# If info is visible, just hide it
 			$CanvasLayer/Info.visible = false
 		elif game_active:
@@ -436,6 +442,15 @@ func _input(event) -> void:
 	if game_active and (event.is_action_pressed("info") or (event is InputEventKey and event.keycode == KEY_I and event.pressed and not event.echo)):
 		$CanvasLayer/Info.visible = !$CanvasLayer/Info.visible
 		return
+
+	if event.is_action_pressed("config") or (event is InputEventKey and event.keycode == KEY_C and event.pressed and not event.echo):
+		if game_active:
+			config_window_visible = !config_window_visible
+			$CanvasLayer/Config.visible = config_window_visible
+			
+			# Apply configuration when closing the window
+			if !config_window_visible:
+				$CanvasLayer/Config.apply_configuration()
 
 	# Only process game inputs if game is active
 	if not game_active:
@@ -571,6 +586,9 @@ func spawn_fighter_jet() -> void:
 	# Initialize the jet
 	jet.initialize(color, team_name, start_pos, direction, self)
 	
+	# Apply configuration
+	apply_jet_config(jet)
+
 	# Connect signal for when jet exits grid
 	jet.connect("jet_exited", on_jet_exited)
 	
@@ -602,6 +620,9 @@ func create_bomb(pos: Vector2i, team_name: String) -> void:
 	# Initialize the bomb
 	bomb.initialize(pos)
 	
+	# Apply configuration
+	apply_bomb_config(bomb)
+
 	# Connect explosion signal
 	bomb.connect("bomb_exploded", on_bomb_exploded)
 	
@@ -1278,6 +1299,9 @@ func process_reproduction_queue() -> void:
 		
 		# Set age to 0 (child)
 		child.age = 0
+
+		# Apply configuration settings to the child entity
+		apply_entity_config(child) 
 		
 		# Connect death signal
 		child.connect("entity_died", on_entity_died)
@@ -1392,6 +1416,9 @@ func place_at_preview() -> void:
 		# Create a new bomb at the preview position
 		var bomb = bomb_scene.instantiate() as Bomb
 		bomb.initialize(grid_pos)
+
+		apply_bomb_config(bomb)
+
 		# Connect explosion signal
 		bomb.connect("bomb_exploded", on_bomb_exploded)
 		add_child(bomb)
@@ -1428,6 +1455,9 @@ func place_at_preview() -> void:
 		entity.gender = current_gender
 		entity.update_sprite_for_age_and_gender()
 		
+		# Apply configuration settings to the entity
+		apply_entity_config(entity)
+
 		# Connect death signal
 		entity.connect("entity_died", on_entity_died)
 		
@@ -1468,6 +1498,8 @@ func place_at_preview() -> void:
 		house.global_position = Vector2(house.position_in_grid.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
 									house.position_in_grid.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
 		
+		apply_house_config(house)
+
 		# Update entrance positions
 		house.update_entrance_positions()
 		
@@ -1485,6 +1517,8 @@ func place_at_preview() -> void:
 		tank.global_position = Vector2(tank.position_in_grid.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
 									tank.position_in_grid.y * Game.CELL_SIZE.y + Game.CELL_SIZE.y / 2)
 		
+		apply_tank_config(tank)
+
 		add_child(tank)
 		tanks.append(tank)
 		
@@ -1550,6 +1584,8 @@ func spawn_random_ufo() -> void:
 	
 	# Initialize the UFO with position and game reference
 	ufo.initialize(color, team_name, ufo_pos, self)
+
+	apply_ufo_config(ufo)
 	
 	# Set global position based on grid position
 	ufo.global_position = Vector2(ufo_pos.x * Game.CELL_SIZE.x + Game.CELL_SIZE.x / 2, 
@@ -1680,3 +1716,80 @@ func is_water_biome(pos: Vector2i) -> bool:
 		return biomes[pos_string] is WaterBiome
 	
 	return false
+
+# Apply entity configuration to a new entity
+func apply_entity_config(entity: Entity) -> void:
+	var config = $CanvasLayer/Config.get_entity_config()
+	
+	# Apply config values to entity
+	entity.LIFESPAN = config["lifespan"]
+	entity.BIRTH_AGE = config["birth_age"]
+	entity.FERTILITY = config["fertility"]
+	entity.FERTILITY_DECREASE = config["fertility_decrease"]
+	
+	# Make sure these are applied to the entity's current values too
+	entity.lifespan = entity.LIFESPAN
+	entity.age = entity.BIRTH_AGE
+	entity.reproduction_chance = entity.FERTILITY
+	entity.reproduction_decrease = entity.FERTILITY_DECREASE
+	
+	# Update sprite based on new age configuration
+	entity.update_sprite_for_age_and_gender()
+
+# Apply tank configuration to a new tank
+func apply_tank_config(tank: Tank) -> void:
+	var config = $CanvasLayer/Config.get_tank_config()
+	
+	# Apply config values to tank
+	tank.HUNTING_COOLDOWN = config["hunting_cooldown"]
+	
+	# Make sure these are applied to the tank's current values too
+	tank.hunting_cooldown = tank.HUNTING_COOLDOWN
+
+# Apply house configuration to a new house
+func apply_house_config(house: House) -> void:
+	var config = $CanvasLayer/Config.get_house_config()
+	
+	# Apply config values to house
+	house.MAX_CAPACITY = config["capacity"]
+	
+	# Make sure these are applied to the house's current values too
+	house.max_capacity = house.MAX_CAPACITY
+
+
+# Apply UFO configuration to a new UFO
+func apply_ufo_config(ufo: UFO) -> void:
+	var config = $CanvasLayer/Config.get_ufo_config()
+	
+	# Apply config values to UFO
+	ufo.MAX_PRESENCE = config["max_presence"]
+	ufo.MAX_HUMANS_AMOUNT = config["max_humans_amount"]
+	
+	# Make sure these are applied to the UFO's current values too
+	ufo.remaining_rounds = ufo.MAX_PRESENCE
+	ufo.max_people_spawned = ufo.MAX_HUMANS_AMOUNT
+
+# Apply bomb configuration to a new bomb
+func apply_bomb_config(bomb: Bomb) -> void:
+	var config = $CanvasLayer/Config.get_bomb_config()
+	
+	# Apply config values to bomb
+	bomb.COUNTDOWN = config["countdown"]
+	bomb.EXPLOSION_RADIUS = config["explosion_radius"]
+	bomb.PLAGUE_CELLS = config["plague_cells"]
+	
+	# Make sure these are applied to the bomb's current values too
+	bomb.countdown = bomb.COUNTDOWN
+	bomb.explosion_radius = bomb.EXPLOSION_RADIUS
+	bomb.plague_cells = bomb.PLAGUE_CELLS
+
+# Apply jet configuration to a new jet
+func apply_jet_config(jet: FighterJet) -> void:
+	var config = $CanvasLayer/Config.get_jet_config()
+	
+	# Apply config values to jet
+	jet.SPEED = config["speed"]
+	jet.cooldown_duration = config["cooldown_duration"]
+	
+	# Make sure these are applied to the jet's current values too
+	jet.speed = jet.SPEED
