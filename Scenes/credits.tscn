@@ -1,0 +1,100 @@
+[gd_scene load_steps=4 format=3 uid="uid://ocxqbseiqk0"]
+
+[ext_resource type="FontFile" uid="uid://ewt0l4gmdk48" path="res://Fonts/scribble.ttf" id="1_r18jl"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gryuy"]
+bg_color = Color(1, 1, 1, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.309804, 0.435294, 0.866667, 0.52549)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+
+[sub_resource type="Theme" id="Theme_ccovl"]
+Label/colors/font_color = Color(0.309804, 0.435294, 0.866667, 1)
+Label/font_sizes/font_size = 20
+Label/fonts/font = ExtResource("1_r18jl")
+
+[node name="Credits" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 250
+theme_override_constants/margin_top = 100
+theme_override_constants/margin_right = 250
+theme_override_constants/margin_bottom = 100
+
+[node name="Panel" type="Panel" parent="MarginContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_gryuy")
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/Panel/MarginContainer"]
+layout_mode = 2
+size_flags_vertical = 4
+size_flags_stretch_ratio = 1.25
+theme_override_constants/separation = 15
+
+[node name="Label" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_ccovl")
+theme_override_colors/font_color = Color(0.827451, 0, 0, 1)
+text = "Maxim Alexei, FAF - 232"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_ccovl")
+text = "Adrian Vremere, FAF - 232"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label3" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_ccovl")
+theme_override_colors/font_color = Color(0.827451, 0, 0, 1)
+text = "Victoria Mutruc, FAF - 232"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label4" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_ccovl")
+text = "Daria Rateeva, FAF - 232"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label5" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme = SubResource("Theme_ccovl")
+theme_override_colors/font_color = Color(0.827451, 0, 0, 1)
+text = "Daniel Cojocaru, FAF - 232"
+horizontal_alignment = 1
+vertical_alignment = 1
