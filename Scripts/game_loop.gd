@@ -16,6 +16,7 @@ const Bomb = preload("res://Scripts/bomb.gd")
 @export var plague_scene: PackedScene
 
 
+
 var entities: Array[Entity] = []
 var rigid_bodies: Array[RigidBody] = []
 var houses: Array[House] = []
@@ -73,7 +74,19 @@ var destruction_queue: Array = []   # Queue for objects to be destroyed
 var game_active = false
 var config_window_visible = false
 
+# Auto evolution variables
+var auto_evolution_active: bool = false
+var evolution_timer: Timer
+@export var auto_evolution_interval: float = 1.0  # Default: 1 second interval
+
 func _ready() -> void:
+	# Set up the evolution timer
+	evolution_timer = Timer.new()
+	evolution_timer.one_shot = false
+	evolution_timer.wait_time = auto_evolution_interval
+	evolution_timer.connect("timeout", _on_evolution_timer_timeout)
+	add_child(evolution_timer)
+
 	# Initialize plague manager - add this near the beginning of your _ready() function
 	plague_manager = PlagueManager.new()
 	plague_manager.initialize(self, Vector2i(Game.CELLS_AMOUNT.x, Game.CELLS_AMOUNT.y))
@@ -96,6 +109,25 @@ func _ready() -> void:
 	info.visible = false
 	game_active = false
 
+# Timer timeout handler for auto evolution
+func _on_evolution_timer_timeout() -> void:
+	if game_active and auto_evolution_active:
+		process_iteration()
+
+# Toggle auto evolution on/off
+func toggle_auto_evolution() -> void:
+	auto_evolution_active = !auto_evolution_active
+	
+	if auto_evolution_active:
+		# Start the timer
+		evolution_timer.wait_time = auto_evolution_interval
+		evolution_timer.start()
+		print("Auto evolution started - interval: ", auto_evolution_interval, "s")
+	else:
+		# Stop the timer
+		evolution_timer.stop()
+		print("Auto evolution stopped")
+
 func start_game():
 	game_active = true
 	$CanvasLayer/Menu.visible = false
@@ -111,6 +143,9 @@ func reset_game():
 			entity.queue_free()
 	entities.clear()
 	entities_to_remove.clear()
+
+	if auto_evolution_active:
+		toggle_auto_evolution()
 	
 	# Clear all rigid bodies
 	for rigid_body in rigid_bodies:
@@ -442,6 +477,10 @@ func _input(event) -> void:
 	if game_active and (event.is_action_pressed("info") or (event is InputEventKey and event.keycode == KEY_I and event.pressed and not event.echo)):
 		$CanvasLayer/Info.visible = !$CanvasLayer/Info.visible
 		return
+
+	# Handle auto evolution toggle
+	if event.is_action_pressed("auto_evolution") or (event is InputEventKey and event.keycode == KEY_A and event.pressed and not event.echo):
+		toggle_auto_evolution()
 
 	if event.is_action_pressed("config") or (event is InputEventKey and event.keycode == KEY_C and event.pressed and not event.echo):
 		if game_active:
