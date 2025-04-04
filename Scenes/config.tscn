@@ -1,6 +1,7 @@
-[gd_scene load_steps=22 format=3 uid="uid://cf38neiho7xlx"]
+[gd_scene load_steps=23 format=3 uid="uid://cf38neiho7xlx"]
 
 [ext_resource type="FontFile" uid="uid://g2bwrwxm387m" path="res://Fonts/crazy.ttf" id="1_gyli8"]
+[ext_resource type="Script" uid="uid://ccwnl66njdkip" path="res://Scripts/config.gd" id="1_tkr1x"]
 [ext_resource type="StyleBox" uid="uid://dyhsyl5vvka65" path="res://Themes/tab_selected_focus_style.tres" id="2_6u63q"]
 [ext_resource type="StyleBox" uid="uid://c3pppgnj8fgsv" path="res://Themes/tab_hover_style.tres" id="2_lrmn4"]
 [ext_resource type="FontFile" uid="uid://ewt0l4gmdk48" path="res://Fonts/scribble.ttf" id="4_lrmn4"]
@@ -151,6 +152,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+script = ExtResource("1_tkr1x")
 
 [node name="MarginContainerOut" type="MarginContainer" parent="."]
 layout_mode = 1
