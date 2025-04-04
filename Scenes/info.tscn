@@ -188,3 +188,29 @@ fit_content = true
 scroll_active = false
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Instruction9" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]Shift[/color] - pause auto sim"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Instruction10" type="RichTextLabel" parent="MarginContainer/Window/MarginContainer/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/default_color = Color(0.309804, 0.435294, 0.866667, 1)
+theme_override_fonts/normal_font = ExtResource("1_oj2s1")
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[color=d30000]Space[/color] - next generation"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
