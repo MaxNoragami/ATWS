@@ -1115,6 +1115,7 @@ water_scene = ExtResource("9_d1ilt")
 jet_scene = ExtResource("10_jkdf5")
 bomb_scene = ExtResource("11_wsu2k")
 plague_scene = ExtResource("12_k12tt")
+auto_evolution_interval = 0.5
 
 [node name="grid" parent="." instance=ExtResource("2_bo1nx")]
 
