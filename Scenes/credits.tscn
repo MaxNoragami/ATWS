@@ -3,7 +3,7 @@
 [ext_resource type="FontFile" uid="uid://ewt0l4gmdk48" path="res://Fonts/scribble.ttf" id="1_r18jl"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gryuy"]
-bg_color = Color(1, 1, 1, 1)
+bg_color = Color(1, 1, 1, 0.529412)
 border_width_left = 5
 border_width_top = 5
 border_width_right = 5
@@ -20,6 +20,7 @@ Label/font_sizes/font_size = 20
 Label/fonts/font = ExtResource("1_r18jl")
 
 [node name="Credits" type="Control"]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -34,9 +35,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 250
+theme_override_constants/margin_left = 225
 theme_override_constants/margin_top = 100
-theme_override_constants/margin_right = 250
+theme_override_constants/margin_right = 225
 theme_override_constants/margin_bottom = 100
 
 [node name="Panel" type="Panel" parent="MarginContainer"]
@@ -72,7 +73,7 @@ vertical_alignment = 1
 [node name="Label2" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme = SubResource("Theme_ccovl")
-text = "Adrian Vremere, FAF - 232"
+text = "Victoria Mutruc, FAF - 232"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -80,13 +81,14 @@ vertical_alignment = 1
 layout_mode = 2
 theme = SubResource("Theme_ccovl")
 theme_override_colors/font_color = Color(0.827451, 0, 0, 1)
-text = "Victoria Mutruc, FAF - 232"
+text = "Adrian Vremere, FAF - 232"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Label4" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme = SubResource("Theme_ccovl")
+theme_override_colors/font_color = Color(0.109804, 0.360784, 0.176471, 1)
 text = "Daria Rateeva, FAF - 232"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -94,7 +96,7 @@ vertical_alignment = 1
 [node name="Label5" type="Label" parent="MarginContainer/Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
 theme = SubResource("Theme_ccovl")
-theme_override_colors/font_color = Color(0.827451, 0, 0, 1)
+theme_override_colors/font_color = Color(0.431373, 0, 0.431373, 1)
 text = "Daniel Cojocaru, FAF - 232"
 horizontal_alignment = 1
 vertical_alignment = 1

@@ -100,9 +100,17 @@ func _ready() -> void:
 	var menu = $CanvasLayer/Menu
 	var tooltip = $CanvasLayer/Tooltip
 	var info = $CanvasLayer/Info
+	var credits = $CanvasLayer/Credits
 	
+	# Set references between UI elements
+	if menu and credits:
+		menu.credits_screen = credits
+
 	menu.connect("play_pressed", start_game)
 	
+	if credits:
+		credits.visible = false
+		
 	# Start with menu visible
 	menu.visible = true
 	tooltip.visible = false
@@ -468,6 +476,10 @@ func _input(event) -> void:
 		elif $CanvasLayer/Info.visible:
 			# If info is visible, just hide it
 			$CanvasLayer/Info.visible = false
+		elif $CanvasLayer/Credits.visible:
+			# If credits are visible, hide them and show menu
+			$CanvasLayer/Credits.visible = false
+			$CanvasLayer/Menu.visible = true
 		elif game_active:
 			# If game is active, reset everything and go back to menu
 			reset_game()
